@@ -12,14 +12,14 @@
         <kotlin.version>1.9.25</kotlin.version>
         <maven.compiler>1.8</maven.compiler>
         <specmatic.version>2.0.25</specmatic.version>
-        <spring.boot.version>2.7.18</spring.boot.version>
+        <spring.boot.version>3.4.3</spring.boot.version>
     </properties>
 
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
-            <version>2.7.18</version>
+            <version>3.4.3</version>
         </dependency>
         <dependency>
             <groupId>javax.validation</groupId>
@@ -220,7 +220,7 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <version>2.7.18</version>
+                <version>3.4.3</version>
                 <configuration>
                     <fork>true</fork>
                     <mainClass>${start.class}</mainClass>
