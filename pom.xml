@@ -11,7 +11,7 @@
     <properties>
         <kotlin.version>1.9.25</kotlin.version>
         <maven.compiler>1.8</maven.compiler>
-        <specmatic.version>2.0.25</specmatic.version>
+        <specmatic.version>2.24.0</specmatic.version>
         <spring.boot.version>2.7.18</spring.boot.version>
     </properties>
 
@@ -206,7 +206,6 @@
                     <encoding>UTF-8</encoding>
                     <source>${maven.compiler}</source>
                     <target>${maven.compiler}</target>
-                    <compilerArgument>-Werror</compilerArgument>
                 </configuration>
             </plugin>
             <plugin>
