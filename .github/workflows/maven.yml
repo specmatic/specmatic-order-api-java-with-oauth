@@ -23,8 +23,29 @@ jobs:
       with:
         java-distribution: 'temurin'
         java-version: ${{ matrix.java }}
+
     - name: Build with Maven
       run: mvn test package jacoco:report -Ptest
+
+    - name: Save Specmatic license
+      run: |
+        mkdir -p ~/.specmatic
+        echo "${{ secrets.SPECMATIC_LICENSE_KEY }}" > ~/.specmatic/specmatic-license.txt
+
+    - name: Run Specmatic Insights Build Reporter
+      run: |
+        docker run \
+          -v ${{ github.workspace }}:/workspace \
+          -v ~/.specmatic:/root/.specmatic \
+          -w /workspace \
+          specmatic/specmatic-reporter \
+          send-report \
+          --metadata build_url=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }} \
+          --branch-name ${{ github.ref_name }} \
+          --repo-name ${{ github.event.repository.name }} \
+          --repo-id ${{ github.repository_id }} \
+          --repo-url ${{ github.event.repository.html_url }}
+
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:

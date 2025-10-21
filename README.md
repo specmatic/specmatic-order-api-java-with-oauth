@@ -1,7 +1,7 @@
 # Specmatic Sample Application to demonstrate OpenAPI OAuth2 security scheme support
 ![Specmatic Sample Application to demonstrate OpenAPI OAuth2 security scheme support](assets/SpecmaticOAuth.gif)
 
-Spec: [OpenAPI Specification](https://github.com/znsio/specmatic-order-contracts/blob/main/io/specmatic/examples/store/openapi/api_order_with_oauth_v3.yaml) representing endpoints exposed by this application.
+Spec: [OpenAPI Specification](https://github.com/specmatic/specmatic-order-contracts/blob/main/io/specmatic/examples/store/openapi/api_order_with_oauth_v3.yaml) representing endpoints exposed by this application.
 
 This project demonstrates how to leverage OpenAPI specifications as a Contract Test with Specmatic when the specification includes [OAuth2 security schemes](https://spec.openapis.org/oas/v3.0.1#security-scheme-object) to protect the endpoints.
 We have used below tools to demonstrate the same.
