@@ -1,7 +1,7 @@
 package com.store.model
 
 import com.store.exceptions.UnrecognizedTypeException
-import javax.validation.ValidationException
+import jakarta.validation.ValidationException
 
 object DB {
     private var PRODUCTS: MutableMap<Int, Product> =
