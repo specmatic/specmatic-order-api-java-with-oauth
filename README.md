@@ -32,9 +32,16 @@ This will start the Keycloak server on localhost:8083 and pre-load with a sample
 #### Start the application
 From the project root folder, run:
 
+1. For Unix and PowerShell terminal:
 ```shell
-mvn clean spring-boot:run -Dspring-boot.run.profiles=prod
+./mvnw clean spring-boot:run -Dspring-boot.run.profiles=prod
 ```
+
+2. For Windows CMD Prompt:
+```shell
+mvnw.cmd clean spring-boot:run -Dspring-boot.run.profiles=prod
+```
+
 This will start the application on localhost:8080.
 
 #### Generate OAuth token
