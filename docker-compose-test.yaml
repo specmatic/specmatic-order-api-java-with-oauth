@@ -16,57 +16,45 @@ services:
       context: .
       dockerfile: Dockerfile
     depends_on:
-      - keycloak
+      keycloak:
+        condition: service_started
     environment:
       SPRING_PROFILES_ACTIVE: prod
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/specmatic
     ports:
       - "8080:8080"
+    restart: on-failure
 
   specmatic-test:
     image: specmatic/specmatic:latest
     depends_on:
-      - keycloak
-      - order-api
+      order-api:
+        condition: service_started
     working_dir: /usr/src/app
     environment:
       APP_BASE_URL: http://order-api:8080
     volumes:
-      - ./specmatic.yaml:/usr/src/app/specmatic.yaml:ro
-      - ./build/reports/specmatic:/usr/src/app/build/reports/specmatic
+      - .:/usr/src/app
     entrypoint: ["/bin/bash"]
     command:
       - -ec
       - |
         set -euo pipefail
 
-        KEYCLOAK_BASE_URL="http://keycloak:8080"
-        OIDC_DISCOVERY_URL="$${KEYCLOAK_BASE_URL}/realms/specmatic/.well-known/openid-configuration"
-        TOKEN_URL="$${KEYCLOAK_BASE_URL}/realms/specmatic/protocol/openid-connect/token"
+        bash scripts/wait_for_http.sh \
+          "http://keycloak:8080/realms/specmatic/.well-known/openid-configuration" \
+          "Keycloak" \
+          90 \
+          2
+        bash scripts/wait_for_http.sh \
+          "http://order-api:8080/actuator/mappings" \
+          "Order API" \
+          90 \
+          2 \
+          "200,401"
 
-        echo "Waiting for Keycloak OIDC endpoint..."
-        for _ in {1..60}; do
-          if curl -fsS "$${OIDC_DISCOVERY_URL}" >/dev/null; then
-            break
-          fi
-          sleep 2
-        done
-        curl -fsS "$${OIDC_DISCOVERY_URL}" >/dev/null
-
-        echo "Waiting for order-api to be reachable..."
-        for _ in {1..60}; do
-          HTTP_CODE="$$(curl -s -o /dev/null -w "%{http_code}" "http://order-api:8080/actuator/mappings" || true)"
-          if [ "$${HTTP_CODE}" = "200" ] || [ "$${HTTP_CODE}" = "401" ]; then
-            break
-          fi
-          sleep 2
-        done
-        HTTP_CODE="$$(curl -s -o /dev/null -w "%{http_code}" "http://order-api:8080/actuator/mappings" || true)"
-        if [ "$${HTTP_CODE}" != "200" ] && [ "$${HTTP_CODE}" != "401" ]; then
-          echo "order-api did not become reachable, last HTTP code: $${HTTP_CODE}"
-          exit 1
-        fi
-
+        TOKEN_URL="http://keycloak:8080/realms/specmatic/protocol/openid-connect/token"
+        
         echo "Fetching OAuth token from Keycloak..."
         OAUTH_TOKEN="$$(curl -fsS -X POST "$${TOKEN_URL}" \
           -H "Content-Type: application/x-www-form-urlencoded" \
