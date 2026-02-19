@@ -41,4 +41,4 @@ components:
               securitySchemes:
                 oAuth2AuthCode:
                   type: oauth2
-                  token: OAUTH1234
+                  token: ${OAUTH_TOKEN:OAUTH1234}
