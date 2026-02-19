@@ -4,6 +4,7 @@ build/*
 lib/*
 *.iml
 *.idea
+.gradle
 
 .vscode/*
 .specmatic

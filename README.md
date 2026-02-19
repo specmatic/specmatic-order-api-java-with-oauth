@@ -48,12 +48,12 @@ From the project root folder, run:
 
 1. For Unix and PowerShell terminal:
 ```shell
-./mvnw clean spring-boot:run -Dspring-boot.run.profiles=prod
+./gradlew clean bootRun --args='--spring.profiles.active=prod'
 ```
 
 2. For Windows CMD Prompt:
 ```shell
-mvnw.cmd clean spring-boot:run -Dspring-boot.run.profiles=prod
+gradlew.bat clean bootRun --args="--spring.profiles.active=prod"
 ```
 
 This will start the application on localhost:8080.
