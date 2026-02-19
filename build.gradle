@@ -33,7 +33,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-validation:${springBootVersion}")
     implementation("org.springframework.boot:spring-boot-starter-oauth2-client:${springBootVersion}")
     implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server:${springBootVersion}")
-    implementation('com.nimbusds:nimbus-jose-jwt:10.7')
+    implementation('com.nimbusds:nimbus-jose-jwt:10.8')
     implementation('org.jetbrains.kotlin:kotlin-reflect')
     implementation('org.jetbrains.kotlin:kotlin-stdlib-jdk8')
 
