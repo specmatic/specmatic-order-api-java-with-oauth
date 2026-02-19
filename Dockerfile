@@ -1,4 +1,4 @@
-FROM maven:3.9.11-eclipse-temurin-17 AS build
+FROM maven:3.9.12-eclipse-temurin-17 AS build
 WORKDIR /workspace
 
 COPY pom.xml mvnw ./
