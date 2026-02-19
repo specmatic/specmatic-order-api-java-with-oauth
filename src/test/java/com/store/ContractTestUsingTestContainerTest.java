@@ -48,6 +48,7 @@ public class ContractTestUsingTestContainerTest {
     private static final GenericContainer<?> testContainer = new GenericContainer<>("specmatic/specmatic:latest")
             .withCommand("test")
             .withEnv("APP_BASE_URL", "http://host.docker.internal:8080")
+            .withFileSystemBind("./spec", "/usr/src/app/spec", BindMode.READ_ONLY)
             .withFileSystemBind("./specmatic.yaml", "/usr/src/app/specmatic.yaml", BindMode.READ_ONLY)
             .withFileSystemBind("./build/reports/specmatic", "/usr/src/app/build/reports/specmatic", BindMode.READ_WRITE)
             .waitingFor(Wait.forLogMessage(".*Tests run:.*", 1))
