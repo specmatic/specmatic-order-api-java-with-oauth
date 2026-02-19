@@ -1,19 +1,44 @@
-sources:
-  - provider: git
-    repository: https://github.com/specmatic/specmatic-order-contracts.git
-    provides:
-      - io/specmatic/examples/store/openapi/api_order_with_oauth_v3.yaml
-
-report:
-  formatters:
-    - type: text
-      layout: table
-  types:
-    APICoverage:
-      OpenAPI:
-        successCriteria:
-          minThresholdPercentage: 70
-          maxMissedEndpointsInSpec: 4
-          enforce: true
-        excludedEndpoints:
-          - /internal/metrics
+version: 3
+systemUnderTest:
+  service:
+    $ref: "#/components/services/orderService"
+    runOptions:
+      $ref: "#/components/runOptions/orderServiceTest"
+    settings:
+      schemaResiliencyTests: all
+specmatic:
+  governance:
+    successCriteria:
+      minCoveragePercentage: 70
+      maxMissedOperationsInSpec: 4
+      enforce: true
+components:
+  sources:
+    specmaticOrderContracts:
+      git:
+        url: https://github.com/specmatic/specmatic-order-contracts.git
+  services:
+    orderService:
+      description: Order Service with OAuth
+      definitions:
+        - definition:
+            source:
+              $ref: "#/components/sources/specmaticOrderContracts"
+            specs:
+              - spec:
+                  id: orderWithOAuthSpec
+                  path: io/specmatic/examples/store/openapi/api_order_with_oauth_v3.yaml
+  runOptions:
+    orderServiceTest:
+      openapi:
+        type: test
+        filter: "PATH!='/internal/metrics'"
+        baseUrl: ${APP_BASE_URL:http://localhost:8080}
+        actuatorUrl: http://localhost:8080/actuator/mappings
+        specs:
+          - spec:
+              id: orderWithOAuthSpec
+              securitySchemes:
+                oAuth2AuthCode:
+                  type: oauth2
+                  token: OAUTH1234
