@@ -14,20 +14,20 @@ specmatic:
       enforce: true
 components:
   sources:
-    specmaticOrderContracts:
-      git:
-        url: https://github.com/specmatic/specmatic-order-contracts.git
+    localContracts:
+      filesystem:
+        directory: .
   services:
     orderService:
       description: Order Service with OAuth
       definitions:
         - definition:
             source:
-              $ref: "#/components/sources/specmaticOrderContracts"
+              $ref: "#/components/sources/localContracts"
             specs:
               - spec:
                   id: orderWithOAuthSpec
-                  path: io/specmatic/examples/store/openapi/api_order_with_oauth_v3.yaml
+                  path: ./spec/api_order_with_oauth_v3.yaml
   runOptions:
     orderServiceTest:
       openapi:
