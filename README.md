@@ -139,3 +139,29 @@ Request to http://localhost:8080 at 2023-9-27 6:59:20.607
     Accept-Charset: UTF-8
     Accept: */*
 ```
+
+#### Running tests with Docker Compose
+This mode runs all required components using containers:
+- Keycloak (OAuth server)
+- Order API (Spring Boot application)
+- Specmatic test runner
+
+From the project root, run:
+
+```shell
+docker compose -f docker-compose-test.yaml up --build specmatic-test
+```
+
+Expected result:
+- Compose command exits with code `0`
+- Specmatic output ends with `Failures: 0`
+
+Generated test reports:
+- `build/reports/specmatic/test/html/index.html`
+- `build/reports/specmatic/test/ctrf/ctrf-report.json`
+
+Cleanup after run:
+
+```shell
+docker compose -f docker-compose-test.yaml down
+```

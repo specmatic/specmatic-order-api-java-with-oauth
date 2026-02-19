@@ -1,0 +1,86 @@
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:22.0.5
+    command: start-dev --import-realm
+    environment:
+      KEYCLOAK_IMPORT: /opt/keycloak/data/import/specmatic-realm.json
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    volumes:
+      - ./keycloak:/opt/keycloak/data/import:ro
+    ports:
+      - "8083:8080"
+
+  order-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - keycloak
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/specmatic
+    ports:
+      - "8080:8080"
+
+  specmatic-test:
+    image: specmatic/specmatic:latest
+    depends_on:
+      - keycloak
+      - order-api
+    working_dir: /usr/src/app
+    environment:
+      APP_BASE_URL: http://order-api:8080
+    volumes:
+      - ./specmatic.yaml:/usr/src/app/specmatic.yaml:ro
+      - ./build/reports/specmatic:/usr/src/app/build/reports/specmatic
+    entrypoint: ["/bin/bash"]
+    command:
+      - -ec
+      - |
+        set -euo pipefail
+
+        KEYCLOAK_BASE_URL="http://keycloak:8080"
+        OIDC_DISCOVERY_URL="$${KEYCLOAK_BASE_URL}/realms/specmatic/.well-known/openid-configuration"
+        TOKEN_URL="$${KEYCLOAK_BASE_URL}/realms/specmatic/protocol/openid-connect/token"
+
+        echo "Waiting for Keycloak OIDC endpoint..."
+        for _ in {1..60}; do
+          if curl -fsS "$${OIDC_DISCOVERY_URL}" >/dev/null; then
+            break
+          fi
+          sleep 2
+        done
+        curl -fsS "$${OIDC_DISCOVERY_URL}" >/dev/null
+
+        echo "Waiting for order-api to be reachable..."
+        for _ in {1..60}; do
+          HTTP_CODE="$$(curl -s -o /dev/null -w "%{http_code}" "http://order-api:8080/actuator/mappings" || true)"
+          if [ "$${HTTP_CODE}" = "200" ] || [ "$${HTTP_CODE}" = "401" ]; then
+            break
+          fi
+          sleep 2
+        done
+        HTTP_CODE="$$(curl -s -o /dev/null -w "%{http_code}" "http://order-api:8080/actuator/mappings" || true)"
+        if [ "$${HTTP_CODE}" != "200" ] && [ "$${HTTP_CODE}" != "401" ]; then
+          echo "order-api did not become reachable, last HTTP code: $${HTTP_CODE}"
+          exit 1
+        fi
+
+        echo "Fetching OAuth token from Keycloak..."
+        OAUTH_TOKEN="$$(curl -fsS -X POST "$${TOKEN_URL}" \
+          -H "Content-Type: application/x-www-form-urlencoded" \
+          --data-urlencode "grant_type=password" \
+          --data-urlencode "client_id=order-api" \
+          --data-urlencode "username=user1" \
+          --data-urlencode "password=password" \
+          --data-urlencode "scope=profile email" \
+          | jq -r ".access_token")"
+
+        if [ -z "$${OAUTH_TOKEN}" ] || [ "$${OAUTH_TOKEN}" = "null" ]; then
+          echo "Failed to fetch access token from Keycloak"
+          exit 1
+        fi
+
+        export OAUTH_TOKEN
+        specmatic test
