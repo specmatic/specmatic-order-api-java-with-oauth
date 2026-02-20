@@ -73,7 +73,8 @@ jobs:
         uses: actions/download-artifact@v7
         with:
           name: jar
-          path: build/
+          path: build/libs/
+
       - name: List files in target directory
         run: ls -lah ./build/libs/specmatic-order-api-java-with-oauth.jar
 
