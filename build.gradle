@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-
 plugins {
     id 'java'
     id 'org.jetbrains.kotlin.jvm' version '2.3.10'
@@ -8,64 +6,29 @@ plugins {
     id 'jacoco'
 }
 
-group = 'com.store'
-version = '1.0'
-def springBootVersion = '3.5.11'
-
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
-    }
-}
-
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    implementation("org.springframework.boot:spring-boot-starter-actuator:${springBootVersion}")
+    implementation("org.springframework.boot:spring-boot-starter-actuator:3.5.11")
     implementation('jakarta.validation:jakarta.validation-api:3.1.1')
-    implementation("org.springframework.boot:spring-boot-starter:${springBootVersion}") {
+    implementation("org.springframework.boot:spring-boot-starter:3.5.11") {
         exclude group: 'org.yaml', module: 'snakeyaml'
     }
-    implementation("org.springframework.boot:spring-boot-starter-web:${springBootVersion}")
-    implementation("org.springframework.boot:spring-boot-starter-security:${springBootVersion}")
-    implementation("org.springframework.boot:spring-boot-starter-validation:${springBootVersion}")
-    implementation("org.springframework.boot:spring-boot-starter-oauth2-client:${springBootVersion}")
-    implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server:${springBootVersion}")
+    implementation("org.springframework.boot:spring-boot-starter-web:3.5.11")
+    implementation("org.springframework.boot:spring-boot-starter-security:3.5.11")
+    implementation("org.springframework.boot:spring-boot-starter-validation:3.5.11")
+    implementation("org.springframework.boot:spring-boot-starter-oauth2-client:3.5.11")
+    implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server:3.5.11")
     implementation('com.nimbusds:nimbus-jose-jwt:10.8')
     implementation('org.jetbrains.kotlin:kotlin-reflect')
     implementation('org.jetbrains.kotlin:kotlin-stdlib-jdk8')
 
-    testImplementation("org.springframework.boot:spring-boot-starter-test:${springBootVersion}")
+    testImplementation("org.springframework.boot:spring-boot-starter-test:3.5.11")
     testImplementation('io.specmatic:junit5-support:2.39.6')
     testImplementation('org.jetbrains.kotlin:kotlin-test-junit5')
     testImplementation('org.testcontainers:junit-jupiter:1.21.4')
-}
-
-tasks.withType(JavaCompile).configureEach {
-    options.encoding = 'UTF-8'
-}
-
-tasks.withType(KotlinCompile).configureEach {
-    kotlinOptions {
-        jvmTarget = '17'
-    }
-}
-
-sourceSets {
-    test {
-        resources {
-            srcDir file('src/test/java')
-            exclude '**/*.java'
-            exclude '**/*.kt'
-        }
-    }
-}
-
-tasks.withType(Test).configureEach {
-    useJUnitPlatform()
-    jvmArgs '-Dfile.encoding=UTF-8'
 }
 
 jacoco {

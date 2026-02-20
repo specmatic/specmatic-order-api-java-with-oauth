@@ -1,21 +1,14 @@
-FROM eclipse-temurin:17.0.18_8-jdk AS build
-WORKDIR /workspace
+FROM amazoncorretto:21.0.10-alpine
 
-COPY gradlew gradlew.bat build.gradle settings.gradle ./
-COPY gradle gradle
-RUN chmod +x gradlew
+RUN apk add --no-cache git curl bash jq && \
+    rm -rf /var/cache/apk/*
 
-# Resolve dependencies in a dedicated layer for better build cache reuse.
-RUN ./gradlew -q --no-daemon dependencies
+SHELL ["/bin/bash", "-c"]
 
-COPY src src
-RUN ./gradlew -q --no-daemon clean bootJar -x test
-
-FROM eclipse-temurin:17.0.18_8-jre
 WORKDIR /app
 
-COPY --from=build /workspace/build/libs/*.jar /app/app.jar
-
 EXPOSE 8080
+
+COPY ./build/libs/specmatic-order-api-java-with-oauth.jar /app/app.jar
 
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]

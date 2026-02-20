@@ -3,6 +3,7 @@
 .idea
 target
 build
+!build/libs
 assets
 README.md
 License.md
