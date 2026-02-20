@@ -75,7 +75,7 @@ jobs:
           name: jar
           path: build/
       - name: List files in target directory
-        run: ls -la build/
+        run: ls -lah ./build/libs/specmatic-order-api-java-with-oauth.jar
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
