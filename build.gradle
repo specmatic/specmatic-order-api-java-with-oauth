@@ -26,7 +26,7 @@ dependencies {
     implementation('org.jetbrains.kotlin:kotlin-stdlib-jdk8')
 
     testImplementation("org.springframework.boot:spring-boot-starter-test:3.5.11")
-    testImplementation('io.specmatic:junit5-support:2.39.6')
+    testImplementation('io.specmatic:junit5-support:2.39.7')
     testImplementation('org.jetbrains.kotlin:kotlin-test-junit5')
     testImplementation('org.testcontainers:junit-jupiter:1.21.4')
 }
