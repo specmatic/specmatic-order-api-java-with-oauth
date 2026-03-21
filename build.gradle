@@ -2,7 +2,7 @@ plugins {
     id 'java'
     id 'org.jetbrains.kotlin.jvm' version '2.3.20'
     id 'org.jetbrains.kotlin.plugin.spring' version '2.3.20'
-    id 'org.springframework.boot' version '3.5.11'
+    id 'org.springframework.boot' version '3.5.12'
     id 'jacoco'
 }
 
@@ -11,21 +11,21 @@ repositories {
 }
 
 dependencies {
-    implementation("org.springframework.boot:spring-boot-starter-actuator:3.5.11")
+    implementation("org.springframework.boot:spring-boot-starter-actuator:3.5.12")
     implementation('jakarta.validation:jakarta.validation-api:3.1.1')
-    implementation("org.springframework.boot:spring-boot-starter:3.5.11") {
+    implementation("org.springframework.boot:spring-boot-starter:3.5.12") {
         exclude group: 'org.yaml', module: 'snakeyaml'
     }
-    implementation("org.springframework.boot:spring-boot-starter-web:3.5.11")
-    implementation("org.springframework.boot:spring-boot-starter-security:3.5.11")
-    implementation("org.springframework.boot:spring-boot-starter-validation:3.5.11")
-    implementation("org.springframework.boot:spring-boot-starter-oauth2-client:3.5.11")
-    implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server:3.5.11")
+    implementation("org.springframework.boot:spring-boot-starter-web:3.5.12")
+    implementation("org.springframework.boot:spring-boot-starter-security:3.5.12")
+    implementation("org.springframework.boot:spring-boot-starter-validation:3.5.12")
+    implementation("org.springframework.boot:spring-boot-starter-oauth2-client:3.5.12")
+    implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server:3.5.12")
     implementation('com.nimbusds:nimbus-jose-jwt:10.8')
     implementation('org.jetbrains.kotlin:kotlin-reflect')
     implementation('org.jetbrains.kotlin:kotlin-stdlib-jdk8')
 
-    testImplementation("org.springframework.boot:spring-boot-starter-test:3.5.11")
+    testImplementation("org.springframework.boot:spring-boot-starter-test:3.5.12")
     testImplementation('io.specmatic:junit5-support:2.42.2')
     testImplementation('org.jetbrains.kotlin:kotlin-test-junit5')
     testImplementation('org.testcontainers:junit-jupiter:1.21.4')
