@@ -1,5 +1,6 @@
 name: Java CI with Gradle
 
+run-name: ${{ inputs.orchestrator_run_suffix && format('Java CI with Gradle - {0}', inputs.orchestrator_run_suffix) || github.workflow }}
 on:
   push:
     branches: [ main ]
@@ -7,6 +8,20 @@ on:
     branches: [ main ]
   repository_dispatch:
     types: contracts changed
+  workflow_dispatch:
+    inputs:
+      enterprise_version:
+        description: Specmatic Enterprise version under test
+        required: false
+        type: string
+      enterprise_artifact_url:
+        description: Specmatic Enterprise jar/artifact URL under test
+        required: false
+        type: string
+      orchestrator_run_suffix:
+        description: Test orchestrator run suffix
+        required: false
+        type: string
 
 jobs:
   build:
@@ -15,9 +30,18 @@ jobs:
         os: [ubuntu-latest]
         java: [17]
     runs-on: ${{ matrix.os }}
+    env:
+      ENTERPRISE_VERSION: ${{ inputs.enterprise_version }}
+      ENTERPRISE_ARTIFACT_URL: ${{ inputs.enterprise_artifact_url }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Add orchestrator context to summary
+        if: ${{ inputs.orchestrator_run_suffix != '' }}
+        run: |
+          echo "### Orchestrator" >> "$GITHUB_STEP_SUMMARY"
+          echo "Run: ${{ inputs.orchestrator_run_suffix }}" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Set up JDK
         uses: actions/setup-java@v4
@@ -31,8 +55,38 @@ jobs:
           mkdir -p ~/.specmatic
           echo "${{ secrets.SPECMATIC_LICENSE_KEY }}" > ~/.specmatic/specmatic-license.txt
 
+      - name: Prepare Specmatic Enterprise artifact
+        if: ${{ inputs.enterprise_artifact_url != '' && inputs.enterprise_version != '' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+      
+          mkdir -p ~/.specmatic
+      
+          echo "Downloading Enterprise artifact from:"
+          echo "${ENTERPRISE_ARTIFACT_URL}"
+      
+          curl --http1.1 -L --fail \
+            --retry 5 \
+            --retry-delay 15 \
+            --retry-all-errors \
+            --continue-at - \
+            "${ENTERPRISE_ARTIFACT_URL}" \
+            -o ~/.specmatic/specmatic-enterprise.jar
+      
+          mvn install:install-file \
+            -Dfile="$HOME/.specmatic/specmatic-enterprise.jar" \
+            -DgroupId=io.specmatic.enterprise \
+            -DartifactId=executable \
+            -Dversion="${ENTERPRISE_VERSION}" \
+            -Dpackaging=jar \
+            -DgeneratePom=true
+
       - name: Build with Gradle
-        run: ./gradlew --no-daemon clean test bootJar jacocoTestReport
+        run: |
+          ./gradlew --no-daemon clean test bootJar jacocoTestReport \
+            ${ENTERPRISE_VERSION:+-PspecmaticEnterpriseVersion=${ENTERPRISE_VERSION}} \
+            ${ENTERPRISE_VERSION:+-PenterpriseVersion=${ENTERPRISE_VERSION}}
 
       - name: Run Specmatic Insights Build Reporter
         run: |
@@ -60,7 +114,7 @@ jobs:
           path: build/libs/*.jar
 
   docker:
-    if: github.ref == 'refs/heads/main'
+    if: ${{ github.ref == 'refs/heads/main' && inputs.orchestrator_run_suffix == '' }}
     needs: build
     runs-on: ubuntu-latest
     permissions:
