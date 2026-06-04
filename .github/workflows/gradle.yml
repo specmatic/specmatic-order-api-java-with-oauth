@@ -91,8 +91,13 @@ jobs:
       - name: Run Specmatic Insights Build Reporter
         run: |
           docker run \
-            -v ${{ github.workspace }}:/usr/src/app \
-            -v ~/.specmatic:/root/.specmatic \
+            --rm \
+            -e GIT_DISCOVERY_ACROSS_FILESYSTEM=1 \
+            -v "${{ github.workspace }}:/workspace" \
+            -v "${{ github.workspace }}/.git:/workspace/.git:ro" \
+            -v "${{ github.workspace }}/specmatic.yaml:/workspace/specmatic.yaml:ro" \
+            -v "${HOME}/.specmatic:/root/.specmatic:ro" \
+            -w /workspace \
             specmatic/specmatic \
             send-report \
             --metadata build_url=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }} \
