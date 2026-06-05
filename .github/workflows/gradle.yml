@@ -60,20 +60,20 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-      
+
           mkdir -p ~/.specmatic
-      
+
           echo "Downloading Enterprise artifact from:"
           echo "${ENTERPRISE_ARTIFACT_URL}"
-      
+
           curl --http1.1 -L --fail \
-            --retry 5 \
-            --retry-delay 15 \
+            --retry 10 \
+            --retry-delay 30 \
             --retry-all-errors \
             --continue-at - \
             "${ENTERPRISE_ARTIFACT_URL}" \
             -o ~/.specmatic/specmatic-enterprise.jar
-      
+
           mvn install:install-file \
             -Dfile="$HOME/.specmatic/specmatic-enterprise.jar" \
             -DgroupId=io.specmatic.enterprise \
