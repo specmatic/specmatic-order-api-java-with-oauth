@@ -37,12 +37,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Add orchestrator context to summary
-        if: ${{ inputs.orchestrator_run_suffix != '' }}
-        run: |
-          echo "### Orchestrator" >> "$GITHUB_STEP_SUMMARY"
-          echo "Run: ${{ inputs.orchestrator_run_suffix }}" >> "$GITHUB_STEP_SUMMARY"
-
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
@@ -50,38 +44,19 @@ jobs:
           java-version: ${{ matrix.java }}
           cache: gradle
 
+      # Internal setup required by Specmatic. Sample project users can ignore this block.
+      - if: ${{ inputs.orchestrator_run_suffix != '' }}
+        uses: specmatic/specmatic-github-workflows/action-orchestrator-setup@main
+        with:
+          orchestrator-run-suffix: ${{ inputs.orchestrator_run_suffix }}
+          docker-hub-username: ${{ vars.SPECMATIC_DOCKER_HUB_USERNAME }}
+          docker-hub-token: ${{ secrets.SPECMATIC_DOCKER_HUB_TOKEN }}
+      # End: internal setup required by Specmatic.
+
       - name: Save Specmatic license
         run: |
           mkdir -p ~/.specmatic
           echo "${{ secrets.SPECMATIC_LICENSE_KEY }}" > ~/.specmatic/specmatic-license.txt
-
-      - name: Prepare Specmatic Enterprise artifact
-        if: ${{ inputs.enterprise_artifact_url != '' && inputs.enterprise_version != '' }}
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          mkdir -p ~/.specmatic
-          url="${ENTERPRISE_ARTIFACT_URL}"
-          output_path="$HOME/.specmatic/specmatic-enterprise.jar"
-          echo "Downloading Enterprise artifact from:"
-          echo "$url"
-
-          initial_sleep=$(( RANDOM % 31 ))
-          echo "Initial jitter: ${initial_sleep}s"
-          sleep "$initial_sleep"
-
-          echo "Download attempt 1/1"
-          curl --http1.1 -L --fail --continue-at - "$url" -o "$output_path"
-          echo "Enterprise artifact downloaded successfully"
-
-          mvn install:install-file \
-            -Dfile="$HOME/.specmatic/specmatic-enterprise.jar" \
-            -DgroupId=io.specmatic.enterprise \
-            -DartifactId=executable \
-            -Dversion="${ENTERPRISE_VERSION}" \
-            -Dpackaging=jar \
-            -DgeneratePom=true
 
       - name: Build with Gradle
         run: |
