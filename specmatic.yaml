@@ -39,9 +39,6 @@ components:
           - spec:
               id: orderApiSpec
               securitySchemes:
-                oAuth2AuthCode:
-                  type: oauth2
-                  token: ${OAUTH_TOKEN:OAUTH1234}
                 basicAuth:
                   type: basicAuth
                   token: ${BASIC_AUTH_TOKEN:dXNlcjpwYXNzd29yZA==}

@@ -8,6 +8,7 @@ import org.springframework.web.filter.OncePerRequestFilter
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
+import java.time.OffsetDateTime
 import java.util.Base64
 
 class DummySecurityFilter : OncePerRequestFilter() {
@@ -16,16 +17,32 @@ class DummySecurityFilter : OncePerRequestFilter() {
         response: HttpServletResponse,
         filterChain: FilterChain
     ) {
-        val authenticated = when (request.method) {
-            HttpMethod.POST.name() -> authenticateOAuth2(request)
+        when (request.method) {
+            HttpMethod.POST.name() -> {
+                val authResult = authorizeOAuth2(request)
+                if (authResult == AuthResult.UNAUTHORIZED) {
+                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authentication failed")
+                    return
+                }
+                if (authResult == AuthResult.FORBIDDEN) {
+                    sendForbidden(response)
+                    return
+                }
+            }
             HttpMethod.GET.name() -> authenticateBasic(request)
+                .takeIf { it } ?: run {
+                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authentication failed")
+                    return
+                }
             HttpMethod.DELETE.name() -> authenticateApiKey(request)
-            else -> false
-        }
-
-        if (!authenticated) {
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authentication failed")
-            return
+                .takeIf { it } ?: run {
+                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authentication failed")
+                    return
+                }
+            else -> {
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authentication failed")
+                return
+            }
         }
 
         SecurityContextHolder.getContext().authentication = PreAuthenticatedAuthenticationToken(
@@ -37,9 +54,27 @@ class DummySecurityFilter : OncePerRequestFilter() {
         filterChain.doFilter(request, response)
     }
 
-    private fun authenticateOAuth2(request: HttpServletRequest): Boolean {
+    private fun authorizeOAuth2(request: HttpServletRequest): AuthResult {
         val authHeader = request.getHeader("Authorization")
-        return authHeader != null && authHeader.startsWith("Bearer ")
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return AuthResult.UNAUTHORIZED
+        }
+
+        val token = authHeader.removePrefix("Bearer ").trim()
+        val isAdminToken = token.endsWith("admin1")
+        val isUserToken = token.endsWith("user1")
+
+        if (!isAdminToken && !isUserToken) {
+            return AuthResult.UNAUTHORIZED
+        }
+
+        val path = request.requestURI
+        return when {
+            path.startsWith("/products") && isAdminToken -> AuthResult.AUTHORIZED
+            path.startsWith("/orders") && isUserToken -> AuthResult.AUTHORIZED
+            path.startsWith("/products") || path.startsWith("/orders") -> AuthResult.FORBIDDEN
+            else -> AuthResult.AUTHORIZED
+        }
     }
 
     private fun authenticateBasic(request: HttpServletRequest): Boolean {
@@ -60,5 +95,17 @@ class DummySecurityFilter : OncePerRequestFilter() {
     private fun authenticateApiKey(request: HttpServletRequest): Boolean {
         val apiKey = request.getHeader("X-API-Key")
         return apiKey != null && apiKey.isNotEmpty()
+    }
+
+    private fun sendForbidden(response: HttpServletResponse) {
+        response.status = HttpServletResponse.SC_FORBIDDEN
+        response.contentType = "application/json"
+        response.writer.write("""{"timestamp":"${OffsetDateTime.now()}","status":403,"error":"Forbidden","message":"Forbidden"}""")
+    }
+
+    private enum class AuthResult {
+        AUTHORIZED,
+        FORBIDDEN,
+        UNAUTHORIZED
     }
 }

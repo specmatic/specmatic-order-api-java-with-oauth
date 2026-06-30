@@ -17,8 +17,6 @@ paths:
             value: 10
           INVALID_ID:
             value: "344"
-          UPDATE_DETAILS:
-            value: 10
           DELETE_PRODUCT:
             value: 20
     get:
@@ -66,26 +64,19 @@ paths:
             text/plain:
               schema:
                 type: string
-              examples:
-                UPDATE_DETAILS:
-                  value: "success"
         "400":
           $ref: "./common_responses.yaml#/components/responses/BadRequest"
+        "403":
+          $ref: "./common_responses.yaml#/components/responses/Forbidden"
       requestBody:
         required: true
         content:
           application/json:
             schema:
               $ref: "./common.yaml#/components/schemas/Product"
-            examples:
-              UPDATE_DETAILS:
-                value:
-                  name: "XYZ Fone"
-                  type: "gadget"
-                  inventory: 10
-                  id: 10
       security:
-        - oAuth2AuthCode: []
+        - oAuth2AuthCode:
+            - admins
     delete:
       summary: Delete a product
       operationId: delete-products-id
@@ -146,8 +137,11 @@ paths:
                 $ref: "./common.yaml#/components/schemas/ProductId"
         "400":
           $ref: "./common_responses.yaml#/components/responses/BadRequest"
+        "403":
+          $ref: "./common_responses.yaml#/components/responses/Forbidden"
       security:
-        - oAuth2AuthCode: []
+        - oAuth2AuthCode:
+            - admins
   /orders:
     get:
       summary: Search for orders
@@ -196,12 +190,6 @@ paths:
           application/json:
             schema:
               $ref: "./common.yaml#/components/schemas/OrderDetails"
-            examples:
-              CREATE_ORDER:
-                value:
-                  productid: 10
-                  count: 2
-                  status: pending
       responses:
         "200":
           description: POST /orders
@@ -209,14 +197,13 @@ paths:
             application/json:
               schema:
                 $ref: "./common.yaml#/components/schemas/OrderId"
-              examples:
-                CREATE_ORDER:
-                  value:
-                    id: 10
         "400":
           $ref: "./common_responses.yaml#/components/responses/BadRequest"
+        "403":
+          $ref: "./common_responses.yaml#/components/responses/Forbidden"
       security:
-        - oAuth2AuthCode: []
+        - oAuth2AuthCode:
+            - users
   "/orders/{id}":
     parameters:
       - schema:
@@ -275,26 +262,19 @@ paths:
             text/plain:
               schema:
                 type: string
-              examples:
-                UPDATE_ORDER:
-                  value: "success"
         "400":
           $ref: "./common_responses.yaml#/components/responses/BadRequest"
+        "403":
+          $ref: "./common_responses.yaml#/components/responses/Forbidden"
       requestBody:
         required: true
         content:
           application/json:
             schema:
               $ref: "./common.yaml#/components/schemas/Order"
-            examples:
-              UPDATE_ORDER:
-                value:
-                  productid: 10
-                  id: 10
-                  count: 1
-                  status: pending
       security:
-        - oAuth2AuthCode: []
+        - oAuth2AuthCode:
+            - users
     delete:
       summary: Cancel an order
       operationId: delete-orders-id
@@ -340,6 +320,8 @@ components:
           tokenUrl: http://localhost:8083/realms/specmatic/protocol/openid-connect/token
           scopes:
             email: email
+            users: users role
+            admins: admins role
     apiKeyAuth:
       type: apiKey
       in: header

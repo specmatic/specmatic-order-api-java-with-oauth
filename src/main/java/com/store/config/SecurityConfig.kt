@@ -2,6 +2,7 @@ package com.store.config
 
 import com.store.security.ApiKeyAuthenticationFilter
 import com.store.security.JwtAuthenticationFilter
+import com.store.handlers.RestSecurityExceptionHandler
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
@@ -13,22 +14,25 @@ import org.springframework.security.core.userdetails.User
 import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
+import org.springframework.security.oauth2.jwt.Jwt
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
 import org.springframework.security.oauth2.server.resource.web.BearerTokenAuthenticationFilter
 import org.springframework.security.provisioning.InMemoryUserDetailsManager
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
+import org.springframework.security.core.authority.SimpleGrantedAuthority
 
 @Configuration
 @Profile("prod")
 open class SecurityConfig {
     @Bean
-    open fun filterChain(http: HttpSecurity): SecurityFilterChain? {
+    open fun filterChain(http: HttpSecurity, restSecurityExceptionHandler: RestSecurityExceptionHandler): SecurityFilterChain? {
         http
             .csrf().disable()  // Disable CSRF for API key and token-based authentication
             .authorizeRequests { auth ->
-                // POST endpoints require OAuth2
-                auth.requestMatchers(HttpMethod.POST, "/products/**").authenticated()
-                auth.requestMatchers(HttpMethod.POST, "/orders/**").authenticated()
+                // POST endpoints require OAuth2 roles
+                auth.requestMatchers(HttpMethod.POST, "/products", "/products/**").hasRole("admins")
+                auth.requestMatchers(HttpMethod.POST, "/orders", "/orders/**").hasRole("users")
 
                 // GET endpoints require Basic Auth
                 auth.requestMatchers(HttpMethod.GET, "/products/**").authenticated()
@@ -41,11 +45,16 @@ open class SecurityConfig {
                 verifyAuthority(auth.anyRequest())
             }
             .httpBasic()  // Enable Basic Authentication for GET endpoints
-        configureFilterChain(http)
+
+        http.exceptionHandling()
+            .authenticationEntryPoint(restSecurityExceptionHandler)
+            .accessDeniedHandler(restSecurityExceptionHandler)
+
+        configureFilterChain(http, restSecurityExceptionHandler)
         return http.build()
     }
 
-    protected open fun configureFilterChain(http: HttpSecurity) {
+    protected open fun configureFilterChain(http: HttpSecurity, restSecurityExceptionHandler: RestSecurityExceptionHandler) {
         // Add API Key filter for DELETE endpoints - must run before authentication checks
         http.addFilterBefore(ApiKeyAuthenticationFilter(), UsernamePasswordAuthenticationFilter::class.java)
 
@@ -53,7 +62,11 @@ open class SecurityConfig {
         http.addFilterAfter(JwtAuthenticationFilter(), BearerTokenAuthenticationFilter::class.java)
 
 
-        http.oauth2ResourceServer { obj: OAuth2ResourceServerConfigurer<HttpSecurity?> -> obj.jwt() }
+        http.oauth2ResourceServer { obj: OAuth2ResourceServerConfigurer<HttpSecurity?> ->
+            obj.authenticationEntryPoint(restSecurityExceptionHandler)
+            obj.accessDeniedHandler(restSecurityExceptionHandler)
+            obj.jwt().jwtAuthenticationConverter(jwtAuthenticationConverter())
+        }
     }
 
     protected open fun verifyAuthority(authorizedUrl: ExpressionUrlAuthorizationConfigurer<HttpSecurity>.AuthorizedUrl) {
@@ -73,5 +86,18 @@ open class SecurityConfig {
     @Bean
     open fun passwordEncoder(): PasswordEncoder {
         return BCryptPasswordEncoder()
+    }
+
+    @Bean
+    open fun jwtAuthenticationConverter(): JwtAuthenticationConverter {
+        val converter = JwtAuthenticationConverter()
+        converter.setJwtGrantedAuthoritiesConverter { jwt -> extractRealmRoles(jwt).map { SimpleGrantedAuthority("ROLE_$it") } }
+        return converter
+    }
+
+    private fun extractRealmRoles(jwt: Jwt): List<String> {
+        val realmAccess = jwt.claims["realm_access"] as? Map<*, *> ?: return emptyList()
+        val roles = realmAccess["roles"] as? Collection<*> ?: return emptyList()
+        return roles.filterIsInstance<String>()
     }
 }
