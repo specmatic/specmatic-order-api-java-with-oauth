@@ -31,8 +31,8 @@ open class SecurityConfig {
             .csrf().disable()  // Disable CSRF for API key and token-based authentication
             .authorizeRequests { auth ->
                 // POST endpoints require OAuth2 roles
-                auth.requestMatchers(HttpMethod.POST, "/products", "/products/**").hasRole("admins")
-                auth.requestMatchers(HttpMethod.POST, "/orders", "/orders/**").hasRole("users")
+                auth.requestMatchers(HttpMethod.POST, "/products/**").hasRole("admins")
+                auth.requestMatchers(HttpMethod.POST, "/orders/**").hasRole("users")
 
                 // GET endpoints require Basic Auth
                 auth.requestMatchers(HttpMethod.GET, "/products/**").authenticated()

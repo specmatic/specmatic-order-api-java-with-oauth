@@ -75,8 +75,7 @@ paths:
             schema:
               $ref: "./common.yaml#/components/schemas/Product"
       security:
-        - oAuth2AuthCode:
-            - admins
+        - oAuth2AuthCode: [admins]
     delete:
       summary: Delete a product
       operationId: delete-products-id
@@ -140,8 +139,7 @@ paths:
         "403":
           $ref: "./common_responses.yaml#/components/responses/Forbidden"
       security:
-        - oAuth2AuthCode:
-            - admins
+        - oAuth2AuthCode: [admins]
   /orders:
     get:
       summary: Search for orders
@@ -202,8 +200,7 @@ paths:
         "403":
           $ref: "./common_responses.yaml#/components/responses/Forbidden"
       security:
-        - oAuth2AuthCode:
-            - users
+        - oAuth2AuthCode: [users]
   "/orders/{id}":
     parameters:
       - schema:
@@ -273,8 +270,7 @@ paths:
             schema:
               $ref: "./common.yaml#/components/schemas/Order"
       security:
-        - oAuth2AuthCode:
-            - users
+        - oAuth2AuthCode: [users]
     delete:
       summary: Cancel an order
       operationId: delete-orders-id

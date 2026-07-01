@@ -6,11 +6,11 @@
 
 This sample shows how to contract test a Spring Boot API from a single OpenAPI spec when different endpoints use different authentication schemes and OAuth2 RBAC:
 - OAuth2 bearer tokens for role-protected `POST` endpoints
-  - Users with the `users` role can interact with `POST /orders` and `POST /orders/{id}`.
-  - Users with the `admins` role can interact with `POST /products` and `POST /products/{id}`.
-  - Role-mismatch cases are covered as forbidden (`403`) scenarios.
-- Basic Auth for endpoints secured with HTTP Basic authentication.
-- API key authentication using the `X-API-Key` header for endpoints secured with API keys.
+  - Users with the `users` role can place orders via `POST /orders` and `POST /orders/{id}`.
+  - Users with the `admins` role can create products via `POST /products` and `POST /products/{id}`.
+  - Role-mismatch cases result in forbidden (`403`) scenarios.
+- `GET` endpoints: Basic Auth for endpoints secured with HTTP Basic authentication.
+- `DELETE` endpoints: API key authentication using the `X-API-Key` header for delete endpoints secured with API keys.
 
 Spec used in this project:
 

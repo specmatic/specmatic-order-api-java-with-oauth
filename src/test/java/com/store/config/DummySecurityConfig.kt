@@ -11,7 +11,7 @@ import org.springframework.security.web.authentication.preauth.AbstractPreAuthen
 
 @Configuration
 @Profile("test")
-open class DummySecurityConfig: SecurityConfig() {
+class DummySecurityConfig: SecurityConfig() {
     @Bean
     override fun filterChain(
         http: HttpSecurity,
