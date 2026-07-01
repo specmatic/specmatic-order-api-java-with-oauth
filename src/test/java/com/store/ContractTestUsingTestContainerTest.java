@@ -56,6 +56,13 @@ public class ContractTestUsingTestContainerTest {
     public void specmaticContractTest() {
         testContainer.start();
         boolean hasSucceeded = testContainer.getLogs().contains("Failures: 0");
-        assertThat(hasSucceeded).isTrue();
+        assertThat(hasSucceeded).withFailMessage("Contract tests have failures").isTrue();
+        Integer exitCode;
+        try (var waitContainerCmd = testContainer.getDockerClient()
+                .waitContainerCmd(testContainer.getContainerId())) {
+            exitCode = waitContainerCmd.start().awaitStatusCode();
+        }
+
+        assertThat(exitCode).withFailMessage("Some contract test checks have failed and the specmatic test container exited with " + exitCode + " exit code").isZero();
     }
 }
