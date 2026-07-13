@@ -2,6 +2,7 @@ package com.store.security
 
 import com.store.model.User
 import org.springframework.security.core.context.SecurityContextHolder
+import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
 import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationToken
 import org.springframework.web.filter.OncePerRequestFilter
@@ -18,11 +19,18 @@ class JwtAuthenticationFilter : OncePerRequestFilter() {
     ) {
         val authentication = SecurityContextHolder.getContext().authentication
         if (authentication is JwtAuthenticationToken) {
-            logger.info("Request: ${request.method} ${request.requestURI} received with a JWT token with scopes: ${authentication.authorities.joinToString(", ")}")
+            val authorities = extractAuthorities(authentication)
+            logger.info("Request: ${request.method} ${request.requestURI} received with JWT roles: ${authorities.joinToString(", ")}")
             SecurityContextHolder.getContext().authentication =
-                PreAuthenticatedAuthenticationToken(User("authenticated_user"), null, authentication.authorities)
+                PreAuthenticatedAuthenticationToken(User(authentication.name), null, authorities)
         }
+
         filterChain.doFilter(request, response)
     }
 
+    private fun extractAuthorities(authentication: JwtAuthenticationToken): List<SimpleGrantedAuthority> {
+        val realmAccess = authentication.token.claims["realm_access"] as? Map<*, *> ?: return emptyList()
+        val roles = realmAccess["roles"] as? Collection<*> ?: return emptyList()
+        return roles.filterIsInstance<String>().map { SimpleGrantedAuthority("ROLE_$it") }
+    }
 }
