@@ -25,6 +25,8 @@ dependencies {
     implementation('org.jetbrains.kotlin:kotlin-reflect')
     implementation('org.jetbrains.kotlin:kotlin-stdlib-jdk8')
 
+  
+    testImplementation('io.specmatic:junit5-support:2.48.0')
     testImplementation("org.springframework.boot:spring-boot-starter-test:3.5.16")
     testImplementation("org.springframework.security:spring-security-test:6.5.11")
     testImplementation("org.mockito.kotlin:mockito-kotlin:5.4.0")
