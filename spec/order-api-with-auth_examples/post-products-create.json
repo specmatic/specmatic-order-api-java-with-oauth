@@ -12,7 +12,7 @@
         "headers": {
           "Content-Type": "application/x-www-form-urlencoded"
         },
-        "body": "grant_type=password&client_id=order-api&username=${KEYCLOAK_ADMIN_USERNAME:admin1}&password=${KEYCLOAK_ADMIN_PASSWORD:password}"
+        "body": "grant_type=password&client_id=order-api&username=${KEYCLOAK_SERVICE_ACCOUNT_USERNAME:service_account}&password=${KEYCLOAK_SERVICE_ACCOUNT_PASSWORD:SvcAcct-Products!2026}"
       },
       "http-response": {
         "status": 200,
@@ -36,7 +36,7 @@
       "body": {}
     },
     "http-response": {
-      "status": 200,
+      "status": 201,
       "body": {},
       "headers": {
         "Content-Type": "application/json"

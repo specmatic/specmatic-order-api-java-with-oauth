@@ -22,7 +22,7 @@ open class Products {
     @Autowired
     lateinit var productService: ProductService
 
-    @PostMapping("/products/{id}")
+    @PatchMapping("/products/{id}")
     @Validated
     fun update(
         @PathVariable id: Int,
@@ -52,7 +52,7 @@ open class Products {
             if(newProduct.type !in typesOfProducts)
                 throw ValidationException("type must be one of ${typesOfProducts.joinToString(", ")}")
         })
-        return ResponseEntity(productId, HttpStatus.OK)
+        return ResponseEntity(productId, HttpStatus.CREATED)
     }
 
     @DeleteMapping("/products/{id}")

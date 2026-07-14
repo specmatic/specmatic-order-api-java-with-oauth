@@ -4,6 +4,8 @@ import com.store.model.Id
 import com.store.services.OrderService
 import com.store.services.ProductService
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
@@ -14,6 +16,8 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
@@ -45,10 +49,10 @@ class OAuthRbacSecurityTest {
         whenever(orderService.createOrder(any())).thenReturn(Id(1))
 
         postAsRole("/orders", "users", """{"productid":10,"count":2,"status":"pending","id":10}""")
-            .andExpect(status().isOk)
+            .andExpect(status().isCreated)
             .andExpect(jsonPath("$.id").value(1))
 
-        postAsRole("/orders/10", "users", """{"productid":10,"count":1,"status":"pending","id":10}""")
+        patchAsRole("/orders/10", "users", """{"productid":10,"count":1,"status":"pending","id":10}""")
             .andExpect(status().isOk)
 
         verify(orderService).createOrder(any())
@@ -66,7 +70,7 @@ class OAuthRbacSecurityTest {
             .andExpect(jsonPath("$.timestamp").exists())
             .andExpect(jsonPath("$.message").exists())
 
-        postAsRole("/products/10", "users", """{"name":"Widget","type":"gadget","inventory":10,"id":10}""")
+        patchAsRole("/products/10", "users", """{"name":"Widget","type":"gadget","inventory":10,"id":10}""")
             .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
             .andExpect(status().isForbidden)
             .andExpect(jsonPath("$.status").value(403))
@@ -82,10 +86,10 @@ class OAuthRbacSecurityTest {
         whenever(productService.addProduct(any())).thenReturn(Id(1))
 
         postAsRole("/products", "admins", """{"name":"Widget","type":"gadget","inventory":10,"id":10}""")
-            .andExpect(status().isOk)
+            .andExpect(status().isCreated)
             .andExpect(jsonPath("$.id").value(1))
 
-        postAsRole("/products/10", "admins", """{"name":"Widget","type":"gadget","inventory":10,"id":10}""")
+        patchAsRole("/products/10", "admins", """{"name":"Widget","type":"gadget","inventory":10,"id":10}""")
             .andExpect(status().isOk)
 
         verify(productService, times(2)).addProduct(any())
@@ -103,7 +107,7 @@ class OAuthRbacSecurityTest {
             .andExpect(jsonPath("$.timestamp").exists())
             .andExpect(jsonPath("$.message").exists())
 
-        postAsRole("/orders/10", "admins", """{"productid":10,"count":1,"status":"pending","id":10}""")
+        patchAsRole("/orders/10", "admins", """{"productid":10,"count":1,"status":"pending","id":10}""")
             .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
             .andExpect(status().isForbidden)
             .andExpect(jsonPath("$.status").value(403))
@@ -114,9 +118,35 @@ class OAuthRbacSecurityTest {
         verifyNoInteractions(orderService)
     }
 
+    @Test
+    fun `health is public`() {
+        mockMvc.perform(get("/health"))
+            .andExpect(status().isOk)
+            .andExpect(content().string("OK"))
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = ["/orders/10", "/products/10"])
+    fun `POST no longer updates resources`(path: String) {
+        mockMvc.perform(post(path))
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.message").value("Request method 'POST' is not supported"))
+    }
+
     private fun postAsRole(path: String, role: String, body: String) =
         mockMvc.perform(
             post(path)
+                .with(jwt().jwt { jwtBuilder ->
+                    jwtBuilder.claim("sub", "user1")
+                    jwtBuilder.claim("realm_access", mapOf("roles" to listOf(role)))
+                })
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body)
+        )
+
+    private fun patchAsRole(path: String, role: String, body: String) =
+        mockMvc.perform(
+            patch(path)
                 .with(jwt().jwt { jwtBuilder ->
                     jwtBuilder.claim("sub", "user1")
                     jwtBuilder.claim("realm_access", mapOf("roles" to listOf(role)))

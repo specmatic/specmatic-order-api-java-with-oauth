@@ -5,6 +5,18 @@ info:
 servers:
   - url: "http://localhost:3000"
 paths:
+  /health:
+    get:
+      summary: Health check
+      operationId: get-health
+      responses:
+        "200":
+          description: Service is healthy
+          content:
+            text/plain:
+              schema:
+                type: string
+      security: []
   "/products/{id}":
     parameters:
       - schema:
@@ -54,9 +66,9 @@ paths:
       operationId: get-product-id
       security:
         - basicAuth: []
-    post:
+    patch:
       summary: Update product details
-      operationId: post-products-id
+      operationId: patch-products-id
       responses:
         "200":
           description: Update successful
@@ -128,7 +140,7 @@ paths:
             schema:
               $ref: "./common.yaml#/components/schemas/ProductDetails"
       responses:
-        "200":
+        "201":
           description: POST /products
           content:
             application/json:
@@ -189,7 +201,7 @@ paths:
             schema:
               $ref: "./common.yaml#/components/schemas/OrderDetails"
       responses:
-        "200":
+        "201":
           description: POST /orders
           content:
             application/json:
@@ -249,9 +261,9 @@ paths:
       parameters: []
       security:
         - basicAuth: []
-    post:
+    patch:
       summary: Update order details
-      operationId: post-orders-id
+      operationId: patch-orders-id
       responses:
         "200":
           description: Success

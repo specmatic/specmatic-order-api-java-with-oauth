@@ -2,9 +2,6 @@
   "before": [
     {
       "type": "http",
-      "executeFor": {
-        "scenarios": "all"
-      },
       "http-request": {
         "baseUrl": "${KEYCLOAK_BASE_URL:http://keycloak:8080}",
         "path": "/realms/specmatic/protocol/openid-connect/token",
@@ -12,7 +9,7 @@
         "headers": {
           "Content-Type": "application/x-www-form-urlencoded"
         },
-        "body": "grant_type=password&client_id=order-api&username=${KEYCLOAK_ADMIN_USERNAME:admin1}&password=${KEYCLOAK_ADMIN_PASSWORD:password}"
+        "body": "grant_type=password&client_id=order-api&username=${KEYCLOAK_SERVICE_ACCOUNT_USERNAME:service_account}&password=${KEYCLOAK_SERVICE_ACCOUNT_PASSWORD:SvcAcct-Products!2026}"
       },
       "http-response": {
         "status": 200,
@@ -27,8 +24,8 @@
   ],
   "partial": {
     "http-request": {
-      "path": "/products/10",
-      "method": "POST",
+      "path": "/orders/10",
+      "method": "PATCH",
       "headers": {
         "Content-Type": "application/json",
         "Authorization": "Bearer $(ACCESS_TOKEN)"
@@ -36,10 +33,15 @@
       "body": {}
     },
     "http-response": {
-      "status": 200,
-      "body": "success",
+      "status": 403,
+      "body": {
+        "timestamp": "(string)",
+        "status": 403,
+        "error": "Forbidden",
+        "message": "(string)"
+      },
       "headers": {
-        "Content-Type": "text/plain"
+        "Content-Type": "application/json"
       }
     }
   }

@@ -2,9 +2,6 @@
   "before": [
     {
       "type": "http",
-      "executeFor": {
-        "scenarios": "all"
-      },
       "http-request": {
         "baseUrl": "${KEYCLOAK_BASE_URL:http://keycloak:8080}",
         "path": "/realms/specmatic/protocol/openid-connect/token",
@@ -27,8 +24,8 @@
   ],
   "partial": {
     "http-request": {
-      "path": "/orders/(id:number)",
-      "method": "POST",
+      "path": "/products/10",
+      "method": "PATCH",
       "headers": {
         "Content-Type": "application/json",
         "Authorization": "Bearer $(ACCESS_TOKEN)"
@@ -36,10 +33,15 @@
       "body": {}
     },
     "http-response": {
-      "status": 200,
-      "body": "success",
+      "status": 403,
+      "body": {
+        "timestamp": "(string)",
+        "status": 403,
+        "error": "Forbidden",
+        "message": "(string)"
+      },
       "headers": {
-        "Content-Type": "text/plain"
+        "Content-Type": "application/json"
       }
     }
   }
