@@ -1,11 +1,4 @@
 openapi: 3.0.1
-# Specmatic 2.48.0 does not parse OpenAPI 3.1 mutualTLS security schemes.
-# This extension records the transport requirement while runtime and contract-test configuration enforce it.
-x-mutualTLS:
-  required: true
-  clientAuth: need
-  securityScheme:
-    type: mutualTLS
 info:
   title: Order API
   version: "2.0"
