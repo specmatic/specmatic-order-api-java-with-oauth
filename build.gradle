@@ -35,8 +35,23 @@ dependencies {
     testImplementation('org.testcontainers:junit-jupiter:1.21.4')
 }
 
+tasks.register('generateDemoCertificates', Exec) {
+    def certificateDirectory = layout.buildDirectory.dir('certs')
+    inputs.file('scripts/generate_demo_certificates.sh')
+    outputs.files(
+            certificateDirectory.map { it.file('ca.crt') },
+            certificateDirectory.map { it.file('server-keystore.jks') },
+            certificateDirectory.map { it.file('server-truststore.jks') },
+            certificateDirectory.map { it.file('specmatic-client.jks') },
+            certificateDirectory.map { it.file('specmatic-client.crt') },
+            certificateDirectory.map { it.file('specmatic-client.key') }
+    )
+    commandLine 'bash', 'scripts/generate_demo_certificates.sh', certificateDirectory.get().asFile.absolutePath
+}
+
 tasks.withType(Test) {
     useJUnitPlatform()
+    dependsOn tasks.named('generateDemoCertificates')
 }
 
 jacoco {

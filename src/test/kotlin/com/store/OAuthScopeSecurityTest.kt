@@ -12,6 +12,7 @@ import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt
 import org.springframework.security.oauth2.jwt.JwtDecoder
+import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.servlet.MockMvc
@@ -31,7 +32,7 @@ import org.mockito.kotlin.whenever
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @AutoConfigureMockMvc
 @ActiveProfiles("prod")
-class OAuthRbacSecurityTest {
+class OAuthScopeSecurityTest {
     @Autowired
     lateinit var mockMvc: MockMvc
 
@@ -45,14 +46,14 @@ class OAuthRbacSecurityTest {
     lateinit var jwtDecoder: JwtDecoder
 
     @Test
-    fun `users can create and update orders`() {
+    fun `user1 can create and update orders with order create scope`() {
         whenever(orderService.createOrder(any())).thenReturn(Id(1))
 
-        postAsRole("/orders", "users", """{"productid":10,"count":2,"status":"pending","id":10}""")
+        postAsScope("/orders", "user1", "order:create", """{"productid":10,"count":2,"status":"pending","id":10}""")
             .andExpect(status().isCreated)
             .andExpect(jsonPath("$.id").value(1))
 
-        patchAsRole("/orders/10", "users", """{"productid":10,"count":1,"status":"pending","id":10}""")
+        patchAsScope("/orders/10", "user1", "order:create", """{"productid":10,"count":1,"status":"pending","id":10}""")
             .andExpect(status().isOk)
 
         verify(orderService).createOrder(any())
@@ -61,8 +62,8 @@ class OAuthRbacSecurityTest {
     }
 
     @Test
-    fun `users cannot create or update products`() {
-        postAsRole("/products", "users", """{"name":"Widget","type":"gadget","inventory":10}""")
+    fun `user1 cannot create or update products without product create scope`() {
+        postAsScope("/products", "user1", "order:create", """{"name":"Widget","type":"gadget","inventory":10}""")
             .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
             .andExpect(status().isForbidden)
             .andExpect(jsonPath("$.status").value(403))
@@ -70,7 +71,7 @@ class OAuthRbacSecurityTest {
             .andExpect(jsonPath("$.timestamp").exists())
             .andExpect(jsonPath("$.message").exists())
 
-        patchAsRole("/products/10", "users", """{"name":"Widget","type":"gadget","inventory":10,"id":10}""")
+        patchAsScope("/products/10", "user1", "order:create", """{"name":"Widget","type":"gadget","inventory":10,"id":10}""")
             .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
             .andExpect(status().isForbidden)
             .andExpect(jsonPath("$.status").value(403))
@@ -82,14 +83,14 @@ class OAuthRbacSecurityTest {
     }
 
     @Test
-    fun `admins can create and update products`() {
+    fun `service account can create and update products with product create scope`() {
         whenever(productService.addProduct(any())).thenReturn(Id(1))
 
-        postAsRole("/products", "admins", """{"name":"Widget","type":"gadget","inventory":10,"id":10}""")
+        postAsScope("/products", "service_account", "product:create", """{"name":"Widget","type":"gadget","inventory":10,"id":10}""")
             .andExpect(status().isCreated)
             .andExpect(jsonPath("$.id").value(1))
 
-        patchAsRole("/products/10", "admins", """{"name":"Widget","type":"gadget","inventory":10,"id":10}""")
+        patchAsScope("/products/10", "service_account", "product:create", """{"name":"Widget","type":"gadget","inventory":10,"id":10}""")
             .andExpect(status().isOk)
 
         verify(productService, times(2)).addProduct(any())
@@ -98,8 +99,8 @@ class OAuthRbacSecurityTest {
     }
 
     @Test
-    fun `admins cannot create or update orders`() {
-        postAsRole("/orders", "admins", """{"productid":10,"count":2,"status":"pending"}""")
+    fun `service account cannot create or update orders without order create scope`() {
+        postAsScope("/orders", "service_account", "product:create", """{"productid":10,"count":2,"status":"pending"}""")
             .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
             .andExpect(status().isForbidden)
             .andExpect(jsonPath("$.status").value(403))
@@ -107,7 +108,7 @@ class OAuthRbacSecurityTest {
             .andExpect(jsonPath("$.timestamp").exists())
             .andExpect(jsonPath("$.message").exists())
 
-        patchAsRole("/orders/10", "admins", """{"productid":10,"count":1,"status":"pending","id":10}""")
+        patchAsScope("/orders/10", "service_account", "product:create", """{"productid":10,"count":1,"status":"pending","id":10}""")
             .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
             .andExpect(status().isForbidden)
             .andExpect(jsonPath("$.status").value(403))
@@ -133,24 +134,24 @@ class OAuthRbacSecurityTest {
             .andExpect(jsonPath("$.message").value("Request method 'POST' is not supported"))
     }
 
-    private fun postAsRole(path: String, role: String, body: String) =
+    private fun postAsScope(path: String, subject: String, scope: String, body: String) =
         mockMvc.perform(
             post(path)
                 .with(jwt().jwt { jwtBuilder ->
-                    jwtBuilder.claim("sub", "user1")
-                    jwtBuilder.claim("realm_access", mapOf("roles" to listOf(role)))
-                })
+                    jwtBuilder.claim("sub", subject)
+                    jwtBuilder.claim("scope", scope)
+                }.authorities(SimpleGrantedAuthority("SCOPE_$scope")))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body)
         )
 
-    private fun patchAsRole(path: String, role: String, body: String) =
+    private fun patchAsScope(path: String, subject: String, scope: String, body: String) =
         mockMvc.perform(
             patch(path)
                 .with(jwt().jwt { jwtBuilder ->
-                    jwtBuilder.claim("sub", "user1")
-                    jwtBuilder.claim("realm_access", mapOf("roles" to listOf(role)))
-                })
+                    jwtBuilder.claim("sub", subject)
+                    jwtBuilder.claim("scope", scope)
+                }.authorities(SimpleGrantedAuthority("SCOPE_$scope")))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body)
         )

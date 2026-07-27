@@ -66,17 +66,16 @@ class DummySecurityFilter : OncePerRequestFilter() {
         }
 
         val token = authHeader.removePrefix("Bearer ").trim()
-        val isServiceAccountToken = token.endsWith("service_account")
-        val isUserToken = token.endsWith("user1")
-
-        if (!isServiceAccountToken && !isUserToken) {
+        if (!token.startsWith("mock-token-")) {
             return AuthResult.UNAUTHORIZED
         }
 
+        val hasOrderCreateScope = token.contains("scope-order:create")
+        val hasProductCreateScope = token.contains("scope-product:create")
         val path = request.requestURI
         return when {
-            path.startsWith("/products") && isServiceAccountToken -> AuthResult.AUTHORIZED
-            path.startsWith("/orders") && isUserToken -> AuthResult.AUTHORIZED
+            path.startsWith("/products") && hasProductCreateScope -> AuthResult.AUTHORIZED
+            path.startsWith("/orders") && hasOrderCreateScope -> AuthResult.AUTHORIZED
             path.startsWith("/products") || path.startsWith("/orders") -> AuthResult.FORBIDDEN
             else -> AuthResult.AUTHORIZED
         }

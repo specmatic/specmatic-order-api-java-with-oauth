@@ -31,8 +31,10 @@ public final class MockTokenServer {
 
     private void tokenResponse(HttpExchange exchange) throws IOException {
         String requestBody = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
-        String username = extractUsername(requestBody);
-        byte[] response = ("{\"access_token\":\"mock-token-" + username + "\"}").getBytes(StandardCharsets.UTF_8);
+        String username = extractFormValue(requestBody, "username", "user1");
+        String requestedScope = extractFormValue(requestBody, "scope", "");
+        String grantedScope = grantedScope(username, requestedScope);
+        byte[] response = ("{\"access_token\":\"mock-token-" + username + "-scope-" + grantedScope + "\"}").getBytes(StandardCharsets.UTF_8);
 
         exchange.getResponseHeaders().add("Content-Type", "application/json");
         exchange.sendResponseHeaders(200, response.length);
@@ -41,12 +43,22 @@ public final class MockTokenServer {
         }
     }
 
-    private String extractUsername(String requestBody) {
+    private String extractFormValue(String requestBody, String key, String defaultValue) {
         return Arrays.stream(requestBody.split("&"))
                 .map(part -> part.split("=", 2))
-                .filter(part -> part.length == 2 && part[0].equals("username"))
+                .filter(part -> part.length == 2 && part[0].equals(key))
                 .map(part -> URLDecoder.decode(part[1], StandardCharsets.UTF_8))
                 .findFirst()
-                .orElse("user1");
+                .orElse(defaultValue);
+    }
+
+    private String grantedScope(String username, String requestedScope) {
+        if (username.equals("user1") && requestedScope.equals("order:create")) {
+            return requestedScope;
+        }
+        if (username.equals("service_account") && requestedScope.equals("product:create")) {
+            return requestedScope;
+        }
+        return "";
     }
 }

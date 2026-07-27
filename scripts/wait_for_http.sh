@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [ "$#" -lt 4 ] || [ "$#" -gt 5 ]; then
-  echo "Usage: $0 <url> <name> <max_attempts> <sleep_seconds> [allowed_status_codes_csv]" >&2
+if [ "$#" -lt 4 ]; then
+  echo "Usage: $0 <url> <name> <max_attempts> <sleep_seconds> [allowed_status_codes_csv] [curl_options...]" >&2
   exit 2
 fi
 
@@ -11,10 +11,16 @@ name="$2"
 max_attempts="$3"
 sleep_seconds="$4"
 allowed_codes="${5:-200}"
+if [ "$#" -ge 5 ]; then
+  shift 5
+else
+  shift 4
+fi
+curl_options=("$@")
 
 attempt=1
 while true; do
-  http_code="$(curl -s -o /dev/null -w "%{http_code}" "$url" || true)"
+  http_code="$(curl -s -o /dev/null -w "%{http_code}" "${curl_options[@]}" "$url" || true)"
   ready=false
 
   IFS=',' read -r -a code_list <<< "$allowed_codes"
