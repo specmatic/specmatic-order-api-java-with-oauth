@@ -588,7 +588,7 @@
     "alwaysDisplayInConsole" : false,
     "clientAuthenticatorType" : "client-secret",
     "redirectUris" : [ "*" ],
-    "webOrigins" : [ "https://localhost:8080" ],
+    "webOrigins" : [ "https://localhost:8443" ],
     "notBefore" : 0,
     "bearerOnly" : false,
     "consentRequired" : false,

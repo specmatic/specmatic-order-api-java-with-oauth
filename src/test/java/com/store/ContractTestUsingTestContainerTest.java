@@ -39,9 +39,9 @@ public class ContractTestUsingTestContainerTest {
 
     private static final GenericContainer<?> testContainer = new GenericContainer<>("specmatic/enterprise:latest")
             .withCommand("test")
-            .withEnv("APP_BASE_URL", "https://host.docker.internal:8080")
-            .withEnv("ACTUATOR_URL", "https://host.docker.internal:8080/actuator/mappings")
-            .withEnv("SPECMATIC_CLIENT_KEYSTORE", "/usr/src/app/build/certs/specmatic-client.jks")
+            .withEnv("APP_BASE_URL", "https://host.docker.internal:8443")
+            .withEnv("ACTUATOR_URL", "https://host.docker.internal:8443/actuator/mappings")
+            .withEnv("SPECMATIC_CLIENT_KEYSTORE", "/usr/src/app/certs/specmatic-client.jks")
             .withEnv("SPECMATIC_CLIENT_KEYSTORE_PASSWORD", "changeit")
             .withEnv("SPECMATIC_CLIENT_KEY_PASSWORD", "changeit")
             .withEnv("KEYCLOAK_USER_USERNAME", "user1")
@@ -51,7 +51,7 @@ public class ContractTestUsingTestContainerTest {
             .withEnv("filter", "PATH!=/health")
             .withFileSystemBind("./spec", "/usr/src/app/spec", BindMode.READ_ONLY)
             .withFileSystemBind("./specmatic.yaml", "/usr/src/app/specmatic.yaml", BindMode.READ_ONLY)
-            .withFileSystemBind("./build/certs", "/usr/src/app/build/certs", BindMode.READ_ONLY)
+            .withFileSystemBind("./certs", "/usr/src/app/certs", BindMode.READ_ONLY)
             .withFileSystemBind("./build/reports/specmatic", "/usr/src/app/build/reports/specmatic", BindMode.READ_WRITE)
             .waitingFor(Wait.forLogMessage(".*Tests run:.*", 1))
             .withExtraHost("host.docker.internal", "host-gateway")
@@ -88,7 +88,7 @@ public class ContractTestUsingTestContainerTest {
     @Test
     public void requestWithoutClientCertificateIsRejectedDuringTlsHandshake() throws Exception {
         HttpClient client = httpsClient(false);
-        HttpRequest request = HttpRequest.newBuilder(URI.create("https://localhost:8080/health")).GET().build();
+        HttpRequest request = HttpRequest.newBuilder(URI.create("https://localhost:8443/health")).GET().build();
 
         assertThatThrownBy(() -> client.send(request, HttpResponse.BodyHandlers.ofString()))
                 .hasRootCauseInstanceOf(SSLHandshakeException.class);
@@ -97,7 +97,7 @@ public class ContractTestUsingTestContainerTest {
     @Test
     public void validClientCertificateReachesHealthEndpoint() throws Exception {
         HttpClient client = httpsClient(true);
-        HttpRequest request = HttpRequest.newBuilder(URI.create("https://localhost:8080/health")).GET().build();
+        HttpRequest request = HttpRequest.newBuilder(URI.create("https://localhost:8443/health")).GET().build();
 
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
@@ -106,13 +106,13 @@ public class ContractTestUsingTestContainerTest {
     }
 
     private static HttpClient httpsClient(boolean includeClientCertificate) throws Exception {
-        KeyStore trustStore = loadKeyStore("./build/certs/server-truststore.jks");
+        KeyStore trustStore = loadKeyStore("./certs/server-truststore.jks");
         TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
         trustManagerFactory.init(trustStore);
 
         KeyManagerFactory keyManagerFactory = null;
         if (includeClientCertificate) {
-            KeyStore clientKeyStore = loadKeyStore("./build/certs/specmatic-client.jks");
+            KeyStore clientKeyStore = loadKeyStore("./certs/specmatic-client.jks");
             keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
             keyManagerFactory.init(clientKeyStore, "changeit".toCharArray());
         }

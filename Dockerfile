@@ -7,7 +7,7 @@ SHELL ["/bin/bash", "-c"]
 
 WORKDIR /app
 
-EXPOSE 8080
+EXPOSE 8443
 
 COPY ./build/libs/specmatic-order-api-java-with-oauth.jar /app/app.jar
 

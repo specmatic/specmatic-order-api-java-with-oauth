@@ -33,11 +33,11 @@ components:
       openapi:
         type: test
         filter: "PATH!='/internal/metrics'"
-        baseUrl: ${APP_BASE_URL:https://localhost:8080}
-        actuatorUrl: ${ACTUATOR_URL:https://localhost:8080/actuator/mappings}
+        baseUrl: ${APP_BASE_URL:https://localhost:8443}
+        actuatorUrl: ${ACTUATOR_URL:https://localhost:8443/actuator/mappings}
         cert:
           keyStore:
-            file: ${SPECMATIC_CLIENT_KEYSTORE:./build/certs/specmatic-client.jks}
+            file: ${SPECMATIC_CLIENT_KEYSTORE:./certs/specmatic-client.jks}
             alias: specmatic-client
             password: ${SPECMATIC_CLIENT_KEY_PASSWORD:changeit}
           keyStorePassword: ${SPECMATIC_CLIENT_KEYSTORE_PASSWORD:changeit}
