@@ -4,10 +4,6 @@ systemUnderTest:
     $ref: "#/components/services/orderService"
     runOptions:
       $ref: "#/components/runOptions/orderServiceTest"
-    data:
-      examples:
-        - directories:
-            - ./contract_examples
     settings:
       schemaResiliencyTests: all
 specmatic:
@@ -18,21 +14,20 @@ specmatic:
       enforce: true
 components:
   sources:
-    labsContracts:
-      git:
-        url: https://github.com/specmatic/labs-contracts.git
-        matchBranch: true
+    localContracts:
+      filesystem:
+        directory: .
   services:
     orderService:
       description: Order Service with Multiple Auth Schemes
       definitions:
         - definition:
             source:
-              $ref: "#/components/sources/labsContracts"
+              $ref: "#/components/sources/localContracts"
             specs:
               - spec:
                   id: orderApiSpec
-                  path: openapi/security/order-api-with-auth.yaml
+                  path: ./spec/order-api-with-auth.yaml
   runOptions:
     orderServiceTest:
       openapi:

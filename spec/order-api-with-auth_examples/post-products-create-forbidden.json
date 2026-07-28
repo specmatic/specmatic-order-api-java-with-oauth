@@ -35,12 +35,11 @@
     "http-response": {
       "status": 403,
       "body": {
-        "timestamp": "2026-07-01T12:26:22+05:30",
+        "timestamp": "(string)",
         "status": 403,
         "error": "Forbidden",
         "message": "(string)"
       },
-      "status-text": "Forbidden",
       "headers": {
         "Content-Type": "application/json"
       }

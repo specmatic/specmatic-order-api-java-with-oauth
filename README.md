@@ -4,16 +4,9 @@ This Spring Boot sample demonstrates an Order API with OAuth 2.0 operation scope
 
 ## Contract and application-owned examples
 
-The OpenAPI contract is centrally owned by [`specmatic/labs-contracts`](https://github.com/specmatic/labs-contracts) at `openapi/security/order-api-with-auth.yaml`.
+The OpenAPI contract is checked in at [`spec/order-api-with-auth.yaml`](spec/order-api-with-auth.yaml).
 
-[`specmatic.yaml`](specmatic.yaml) uses that Git source with `matchBranch: true`. Set both ref variables to the application branch when running contract tests locally:
-
-```shell
-export GITHUB_REF_NAME="$(git branch --show-current)"
-export GITHUB_HEAD_REF="$GITHUB_REF_NAME"
-```
-
-This lets Specmatic check out the matching branch in the central contract repository. The application-owned OAuth fixtures live in [`contract_examples`](contract_examples) and are loaded explicitly through `systemUnderTest.service.data.examples`; they are not adjacent to a copied contract.
+[`specmatic.yaml`](specmatic.yaml) uses this filesystem contract directly. The OAuth fixtures live alongside it in [`spec/order-api-with-auth_examples`](spec/order-api-with-auth_examples), which lets Specmatic load them as external examples.
 
 ## Authentication and authorization
 
@@ -47,8 +40,6 @@ The repository-local OpenAPI 3.0 contract configuration does not declare a custo
 This starts the application in the `test` profile, uses the in-process mock token server, and runs Specmatic against `https://localhost:8443` with the demo client JKS.
 
 ```shell
-export GITHUB_REF_NAME="$(git branch --show-current)"
-export GITHUB_HEAD_REF="$GITHUB_REF_NAME"
 ./gradlew test --tests com.store.ContractTest
 ```
 
@@ -56,11 +47,9 @@ The mock token server preserves the fixture flow: the fixture requests a scope, 
 
 ### JUnit with Testcontainers
 
-This runs the production security profile, real Keycloak, and Specmatic Enterprise in containers. The test forwards the current branch to the Specmatic container so it selects the matching central contract branch.
+This runs the production security profile, real Keycloak, and Specmatic Enterprise in containers against the checked-in contract and examples.
 
 ```shell
-export GITHUB_REF_NAME="$(git branch --show-current)"
-export GITHUB_HEAD_REF="$GITHUB_REF_NAME"
 ./gradlew test --tests com.store.ContractTestUsingTestContainerTest
 ```
 
@@ -72,12 +61,10 @@ The Dockerfile copies a prebuilt application JAR, so build it before starting Co
 
 ```shell
 ./gradlew bootJar
-export GITHUB_REF_NAME="$(git branch --show-current)"
-export GITHUB_HEAD_REF="$GITHUB_REF_NAME"
 docker compose -f docker-compose-test.yaml up --build --abort-on-container-exit --exit-code-from specmatic-test
 ```
 
-Compose starts Keycloak, the Order API, and Specmatic Enterprise. It forwards both GitHub ref variables to the Specmatic container, mounts `certs` into the API, and uses the client JKS plus an HTTPS mTLS health check before running the contract suite.
+Compose starts Keycloak, the Order API, and Specmatic Enterprise. It mounts the checked-in contract/examples and `certs`, then uses the client JKS plus an HTTPS mTLS health check before running the contract suite.
 
 Reports are written to:
 
