@@ -23,6 +23,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyStore;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -33,6 +34,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @ActiveProfiles("prod")
 @EnabledIf(value = "isNonCIOrLinux", disabledReason = "Run only on Linux in CI; all platforms allowed locally")
 public class ContractTestUsingTestContainerTest {
+    private static final String CONTRACT_BRANCH = contractBranch();
+
     public static boolean isNonCIOrLinux() {
         return !"true".equals(System.getenv("CI")) || System.getProperty("os.name").toLowerCase().contains("linux");
     }
@@ -48,9 +51,11 @@ public class ContractTestUsingTestContainerTest {
             .withEnv("KEYCLOAK_USER_PASSWORD", "password")
             .withEnv("KEYCLOAK_SERVICE_ACCOUNT_USERNAME", "service_account")
             .withEnv("KEYCLOAK_SERVICE_ACCOUNT_PASSWORD", "SvcAcct-Products!2026")
+            .withEnv("GITHUB_HEAD_REF", CONTRACT_BRANCH)
+            .withEnv("GITHUB_REF_NAME", CONTRACT_BRANCH)
             .withEnv("filter", "PATH!=/health")
-            .withFileSystemBind("./spec", "/usr/src/app/spec", BindMode.READ_ONLY)
             .withFileSystemBind("./specmatic.yaml", "/usr/src/app/specmatic.yaml", BindMode.READ_ONLY)
+            .withFileSystemBind("./contract_examples", "/usr/src/app/contract_examples", BindMode.READ_ONLY)
             .withFileSystemBind("./certs", "/usr/src/app/certs", BindMode.READ_ONLY)
             .withFileSystemBind("./build/reports/specmatic", "/usr/src/app/build/reports/specmatic", BindMode.READ_WRITE)
             .waitingFor(Wait.forLogMessage(".*Tests run:.*", 1))
@@ -132,5 +137,28 @@ public class ContractTestUsingTestContainerTest {
             keyStore.load(input, "changeit".toCharArray());
         }
         return keyStore;
+    }
+
+    private static String contractBranch() {
+        String headRef = System.getenv("GITHUB_HEAD_REF");
+        if (headRef != null && !headRef.isBlank()) {
+            return headRef;
+        }
+
+        String refName = System.getenv("GITHUB_REF_NAME");
+        if (refName != null && !refName.isBlank()) {
+            return refName;
+        }
+
+        try {
+            Process process = new ProcessBuilder("git", "branch", "--show-current").start();
+            String branch = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8).trim();
+            if (process.waitFor() != 0 || branch.isBlank()) {
+                throw new IllegalStateException("Unable to determine the current contract branch");
+            }
+            return branch;
+        } catch (Exception exception) {
+            throw new IllegalStateException("Set GITHUB_HEAD_REF or GITHUB_REF_NAME to select the contract branch", exception);
+        }
     }
 }

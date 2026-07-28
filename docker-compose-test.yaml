@@ -52,6 +52,8 @@ services:
       KEYCLOAK_USER_PASSWORD: password
       KEYCLOAK_SERVICE_ACCOUNT_USERNAME: service_account
       KEYCLOAK_SERVICE_ACCOUNT_PASSWORD: SvcAcct-Products!2026
+      GITHUB_HEAD_REF: ${GITHUB_HEAD_REF:-}
+      GITHUB_REF_NAME: ${GITHUB_REF_NAME:-}
     volumes:
       - .:/usr/src/app
     entrypoint: ["/bin/bash"]
