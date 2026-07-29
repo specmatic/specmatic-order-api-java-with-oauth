@@ -4,9 +4,9 @@ This Spring Boot sample demonstrates an Order API with OAuth 2.0 operation scope
 
 ## Contract and application-owned examples
 
-The OpenAPI contract is checked in at [`spec/order-api-with-auth.yaml`](spec/order-api-with-auth.yaml).
+The OpenAPI contract is checked in at [`spec/order-api-with-auth_v2.yaml`](spec/order-api-with-auth_v2.yaml).
 
-[`specmatic.yaml`](specmatic.yaml) uses this filesystem contract directly. The OAuth fixtures live alongside it in [`spec/order-api-with-auth_examples`](spec/order-api-with-auth_examples), which lets Specmatic load them as external examples.
+[`specmatic.yaml`](specmatic.yaml) uses this filesystem contract directly. The OAuth fixtures live alongside it in [`spec/order-api-with-auth_v2_examples`](spec/order-api-with-auth_v2_examples), which lets Specmatic load them as external examples.
 
 ## Authentication and authorization
 

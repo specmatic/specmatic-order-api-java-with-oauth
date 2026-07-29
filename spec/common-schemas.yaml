@@ -1,0 +1,213 @@
+components:
+  schemas:
+    ProductInventory:
+      type: integer
+      minimum: 1
+      maximum: 101
+    ProductType:
+      type: string
+      title: Product Type
+      enum:
+        - book
+        - food
+        - gadget
+        - other
+    MonitorLink:
+      type: string
+      description: Monitor link to check status
+      example: </monitor/123>;rel=related;title=monitor
+    Id:
+      type: object
+      properties:
+        id:
+          type: integer
+      required:
+        - id
+    CreatedOn:
+      type: object
+      required:
+        - createdOn
+      properties:
+        createdOn:
+          type: string
+          format: date
+    ProductBase:
+      title: Product Details
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          $ref: '#/components/schemas/ProductType'
+        inventory:
+          $ref: '#/components/schemas/ProductInventory'
+      required:
+        - name
+        - type
+        - inventory
+    Product:
+      allOf:
+        - $ref: '#/components/schemas/Id'
+        - $ref: '#/components/schemas/ProductBase'
+        - $ref: '#/components/schemas/CreatedOn'
+    ExtendedProductInventory:
+      type: integer
+      minimum: 1
+      maximum: 9999
+    ExtendedProductBase:
+      title: Product Details
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          $ref: '#/components/schemas/ProductType'
+        inventory:
+          $ref: '#/components/schemas/ExtendedProductInventory'
+        cost:
+          type: number
+          format: float
+          minimum: 0.01
+      required:
+        - name
+        - type
+        - inventory
+    ExtendedProduct:
+      allOf:
+        - $ref: '#/components/schemas/Id'
+        - $ref: '#/components/schemas/ExtendedProductBase'
+        - $ref: '#/components/schemas/CreatedOn'
+    OrderBase:
+      title: Order Details
+      type: object
+      properties:
+        productid:
+          type: integer
+        count:
+          type: integer
+      required:
+        - productid
+        - count
+    FulfilledOrderStatus:
+      type: string
+      title: OrderStatus
+      enum:
+        - fulfilled
+        - pending
+        - cancelled
+    Order:
+      allOf:
+        - $ref: '#/components/schemas/Id'
+        - $ref: '#/components/schemas/OrderBase'
+        - type: object
+          properties:
+            status:
+              type: string
+              enum: [pending, completed, cancelled]
+          required:
+            - status
+    MonitorResponse:
+      type: object
+      description: Monitoring of resources
+      properties:
+        request:
+          $ref: '#/components/schemas/Request'
+        response:
+          $ref: '#/components/schemas/Response'
+    Request:
+      type: object
+      description: A response to a request
+      properties:
+        method:
+          type: string
+        body:
+          type: object
+        headers:
+          type: array
+          items:
+            $ref: '#/components/schemas/HeaderItem'
+      required:
+        - method
+        - body
+        - headers
+    Response:
+      type: object
+      description: A response to a request
+      properties:
+        statusCode:
+          type: integer
+        body:
+          type: object
+        headers:
+          type: array
+          items:
+            $ref: '#/components/schemas/HeaderItem'
+      required:
+        - statusCode
+        - body
+        - headers
+    HeaderItem:
+      type: object
+      properties:
+        name:
+          type: string
+        value:
+          type: string
+    FraudHold:
+      type: object
+      properties:
+        durationInMinutes:
+          type: integer
+          description: Duration of hold in Minutes
+          format: int32
+        autoCloseAction:
+          type: string
+          description: Action to be performed after lapsing DurationInMinutes
+          nullable: true
+      additionalProperties: {}
+      description: Fraud hold details
+    BadRequest:
+      title: Bad Request
+      type: object
+      properties:
+        timestamp:
+          type: string
+        status:
+          type: integer
+        error:
+          type: string
+        message:
+          type: string
+  responses:
+    MonitorStatus:
+      description: Monitor status
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/MonitorResponse'
+    BadRequest:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/BadRequest'
+  pathItems:
+    MonitorById:
+      get:
+        summary: Retrieve a monitor by ID
+        description: Retrieves a Monitor by ID
+        operationId: retrieveMonitor
+        tags:
+          - Monitor
+        parameters:
+          - name: id
+            in: path
+            required: true
+            description: Identifier of the monitor resource to retrieve.
+            schema:
+              type: integer
+        responses:
+          '200':
+            $ref: '#/components/responses/MonitorStatus'
+          '400':
+            $ref: '#/components/responses/BadRequest'

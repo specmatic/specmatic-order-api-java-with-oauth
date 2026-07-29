@@ -1,5 +1,7 @@
 components:
   schemas:
+    ProductType:
+      $ref: './common-schemas.yaml#/components/schemas/ProductType'
     ProductDetails:
       title: Product Details
       type: object
@@ -7,35 +9,22 @@ components:
         name:
           type: string
         type:
-          $ref: '#/components/schemas/ProductType'
+          $ref: './common-schemas.yaml#/components/schemas/ProductType'
         inventory:
           type: integer
       required:
         - name
         - type
         - inventory
-    ProductType:
-      type: string
-      title: Product Type
-      description: Fixed set of product types
-      enum:
-        - book
-        - food
-        - gadget
-        - other
     ProductId:
-      title: Product Id
-      type: object
-      properties:
-        id:
-          type: integer
-      required:
-        - id
+      $ref: './common-schemas.yaml#/components/schemas/Id'
     Product:
       title: Product
       allOf:
         - $ref: '#/components/schemas/ProductId'
         - $ref: '#/components/schemas/ProductDetails'
+    OrderStatus:
+      $ref: './common-schemas.yaml#/components/schemas/FulfilledOrderStatus'
     OrderDetails:
       title: Order Details
       description: Order details including product id, count and status
@@ -46,26 +35,13 @@ components:
         count:
           type: integer
         status:
-          $ref: '#/components/schemas/OrderStatus'
+          $ref: './common-schemas.yaml#/components/schemas/FulfilledOrderStatus'
       required:
         - productid
         - count
         - status
-    OrderStatus:
-      type: string
-      title: OrderStatus
-      enum:
-        - fulfilled
-        - pending
-        - cancelled
     OrderId:
-      title: Order Id
-      type: object
-      properties:
-        id:
-          type: integer
-      required:
-        - id
+      $ref: './common-schemas.yaml#/components/schemas/Id'
     Order:
       title: Order
       allOf:

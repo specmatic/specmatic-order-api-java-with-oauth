@@ -27,7 +27,7 @@ components:
             specs:
               - spec:
                   id: orderApiSpec
-                  path: ./spec/order-api-with-auth.yaml
+                  path: ./spec/order-api-with-auth_v2.yaml
   runOptions:
     orderServiceTest:
       openapi:
