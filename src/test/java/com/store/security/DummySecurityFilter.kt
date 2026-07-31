@@ -17,8 +17,13 @@ class DummySecurityFilter : OncePerRequestFilter() {
         response: HttpServletResponse,
         filterChain: FilterChain
     ) {
+        if (request.requestURI == "/health") {
+            filterChain.doFilter(request, response)
+            return
+        }
+
         when (request.method) {
-            HttpMethod.POST.name() -> {
+            HttpMethod.POST.name(), HttpMethod.PATCH.name() -> {
                 val authResult = authorizeOAuth2(request)
                 if (authResult == AuthResult.UNAUTHORIZED) {
                     response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authentication failed")
@@ -61,17 +66,16 @@ class DummySecurityFilter : OncePerRequestFilter() {
         }
 
         val token = authHeader.removePrefix("Bearer ").trim()
-        val isAdminToken = token.endsWith("admin1")
-        val isUserToken = token.endsWith("user1")
-
-        if (!isAdminToken && !isUserToken) {
+        if (!token.startsWith("mock-token-")) {
             return AuthResult.UNAUTHORIZED
         }
 
+        val hasOrderCreateScope = token.contains("scope-order:create")
+        val hasProductCreateScope = token.contains("scope-product:create")
         val path = request.requestURI
         return when {
-            path.startsWith("/products") && isAdminToken -> AuthResult.AUTHORIZED
-            path.startsWith("/orders") && isUserToken -> AuthResult.AUTHORIZED
+            path.startsWith("/products") && hasProductCreateScope -> AuthResult.AUTHORIZED
+            path.startsWith("/orders") && hasOrderCreateScope -> AuthResult.AUTHORIZED
             path.startsWith("/products") || path.startsWith("/orders") -> AuthResult.FORBIDDEN
             else -> AuthResult.AUTHORIZED
         }

@@ -12,6 +12,7 @@ services:
       - "8083:8080"
 
   order-api:
+    image: specmaticdemo/specmatic-order-api-java-with-oauth:latest
     build:
       context: .
       dockerfile: Dockerfile
@@ -21,8 +22,17 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: prod
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/specmatic
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_AUDIENCES: order-api
+      SERVER_SSL_KEY_STORE: file:/certs/server-keystore.jks
+      SERVER_SSL_KEY_STORE_PASSWORD: changeit
+      SERVER_SSL_KEY_PASSWORD: changeit
+      SERVER_SSL_TRUST_STORE: file:/certs/server-truststore.jks
+      SERVER_SSL_TRUST_STORE_PASSWORD: changeit
+      SERVER_SSL_CLIENT_AUTH: need
+    volumes:
+      - ./certs:/certs:ro
     ports:
-      - "8080:8080"
+      - "8443:8443"
     restart: on-failure
 
   specmatic-test:
@@ -32,12 +42,16 @@ services:
         condition: service_started
     working_dir: /usr/src/app
     environment:
-      APP_BASE_URL: http://order-api:8080
+      APP_BASE_URL: https://order-api:8443
+      ACTUATOR_URL: https://order-api:8443/actuator/mappings
+      SPECMATIC_CLIENT_KEYSTORE: /usr/src/app/certs/specmatic-client.jks
+      SPECMATIC_CLIENT_KEYSTORE_PASSWORD: changeit
+      SPECMATIC_CLIENT_KEY_PASSWORD: changeit
       KEYCLOAK_BASE_URL: http://keycloak:8080
       KEYCLOAK_USER_USERNAME: user1
       KEYCLOAK_USER_PASSWORD: password
-      KEYCLOAK_ADMIN_USERNAME: admin1
-      KEYCLOAK_ADMIN_PASSWORD: password
+      KEYCLOAK_SERVICE_ACCOUNT_USERNAME: service_account
+      KEYCLOAK_SERVICE_ACCOUNT_PASSWORD: SvcAcct-Products!2026
     volumes:
       - .:/usr/src/app
     entrypoint: ["/bin/bash"]
@@ -52,9 +66,12 @@ services:
           90 \
           2
         bash scripts/wait_for_http.sh \
-          "http://order-api:8080/actuator/mappings" \
+          "https://order-api:8443/health" \
           "Order API" \
           90 \
           2 \
-          "200,401"
-        specmatic test
+          "200" \
+          --cacert certs/ca.crt \
+          --cert certs/specmatic-client.crt \
+          --key certs/specmatic-client.key
+        specmatic test --filter="PATH!='/health'"

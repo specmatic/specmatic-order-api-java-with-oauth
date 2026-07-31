@@ -6,6 +6,17 @@ components:
         application/json:
           schema:
             $ref: "./common_response_schema.yaml#/components/schemas/BadRequestErrorResponseBody"
+    Unauthorized:
+      description: "Unauthorized"
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: "./common_response_schema.yaml#/components/schemas/BadRequestErrorResponseBody"
+              - type: object
+                properties:
+                  path:
+                    type: string
     Forbidden:
       description: "Forbidden"
       content:

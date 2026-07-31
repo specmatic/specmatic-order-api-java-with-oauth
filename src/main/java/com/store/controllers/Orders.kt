@@ -19,7 +19,7 @@ class Orders {
     @PostMapping("/orders")
     fun create(@Valid @RequestBody order: Order, @AuthenticationPrincipal user: User): ResponseEntity<Id> {
         val orderId = orderService.createOrder(order)
-        return ResponseEntity(orderId, HttpStatus.OK)
+        return ResponseEntity(orderId, HttpStatus.CREATED)
     }
 
     @GetMapping("/orders/{id}")
@@ -37,7 +37,7 @@ class Orders {
         return ResponseEntity(HttpStatus.OK)
     }
 
-    @PostMapping("/orders/{id}")
+    @PatchMapping("/orders/{id}")
     fun update(
         @PathVariable("id") id: Int,
         @Valid @RequestBody order: Order,

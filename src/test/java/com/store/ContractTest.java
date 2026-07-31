@@ -9,6 +9,10 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.context.ConfigurableApplicationContext;
 
 public class ContractTest implements SpecmaticContractTest {
+    static {
+        System.setProperty("filter", "PATH!=/health");
+    }
+
     private static ConfigurableApplicationContext context;
     private static final MockTokenServer tokenServer = new MockTokenServer();
 
@@ -23,10 +27,10 @@ public class ContractTest implements SpecmaticContractTest {
     @AfterAll
     public static void tearDown() {
         System.clearProperty("KEYCLOAK_BASE_URL");
+        System.clearProperty("filter");
         tokenServer.stop();
         if (context != null) {
             context.close();
         }
     }
 }
-

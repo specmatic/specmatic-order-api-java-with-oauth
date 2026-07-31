@@ -13,4 +13,7 @@ class Internal {
     fun metrics(): Int {
         return metricService.activeUsers()
     }
+
+    @GetMapping("/health")
+    fun health(): String = "OK"
 }

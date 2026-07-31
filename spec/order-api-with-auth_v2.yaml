@@ -1,17 +1,37 @@
 openapi: 3.0.1
 info:
   title: Order API
+  description: Order API with authentication
   version: "2.0"
+tags:
+  - name: Order
+    description: Order operations.
+  - name: Product
+    description: Product operations.
 servers:
   - url: "http://localhost:3000"
 paths:
+  /health:
+    get:
+      summary: Health check
+      description: Reports whether the service is available.
+      operationId: get-health
+      responses:
+        "200":
+          description: Service is healthy
+          content:
+            text/plain:
+              schema:
+                type: string
+      security: []
   "/products/{id}":
     parameters:
       - schema:
-          type: number
+          type: integer
         name: id
         in: path
         required: true
+        description: Identifier of the product.
         examples:
           GET_DETAILS:
             value: 10
@@ -21,7 +41,9 @@ paths:
             value: 20
     get:
       summary: Fetch product details
-      tags: []
+      description: Retrieves a product by its identifier.
+      tags:
+        - Product
       responses:
         "200":
           description: OK
@@ -36,6 +58,8 @@ paths:
                     type: "gadget"
                     inventory: 10
                     id: 10
+        "401":
+          $ref: "./common_responses.yaml#/components/responses/Unauthorized"
         "400":
           $ref: "./common_responses.yaml#/components/responses/BadRequest"
         "404":
@@ -43,7 +67,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ErrorResponseBody"
+                $ref: "./common_response_schema.yaml#/components/schemas/BadRequestErrorResponseBody"
               examples:
                 INVALID_ID:
                   value:
@@ -54,9 +78,12 @@ paths:
       operationId: get-product-id
       security:
         - basicAuth: []
-    post:
+    patch:
       summary: Update product details
-      operationId: post-products-id
+      description: Updates an existing product by its identifier.
+      operationId: patch-products-id
+      tags:
+        - Product
       responses:
         "200":
           description: Update successful
@@ -64,6 +91,8 @@ paths:
             text/plain:
               schema:
                 type: string
+        "401":
+          $ref: "./common_responses.yaml#/components/responses/Unauthorized"
         "400":
           $ref: "./common_responses.yaml#/components/responses/BadRequest"
         "403":
@@ -75,10 +104,13 @@ paths:
             schema:
               $ref: "./common.yaml#/components/schemas/Product"
       security:
-        - oAuth2AuthCode: [admins]
+        - oAuth2AuthCode: ["product:create"]
     delete:
       summary: Delete a product
+      description: Deletes an existing product by its identifier.
       operationId: delete-products-id
+      tags:
+        - Product
       responses:
         "200":
           description: Deletion successful
@@ -89,6 +121,8 @@ paths:
               examples:
                 DELETE_PRODUCT:
                   value: "success"
+        "401":
+          $ref: "./common_responses.yaml#/components/responses/Unauthorized"
         "400":
           $ref: "./common_responses.yaml#/components/responses/BadRequest"
       security:
@@ -96,9 +130,14 @@ paths:
   /products:
     get:
       summary: GET Products based on type
+      description: Returns products filtered by the requested criteria.
+      operationId: get-products
+      tags:
+        - Product
       parameters:
         - name: type
           in: query
+          description: Filter products by product type.
           schema:
             type: string
             enum:
@@ -115,12 +154,18 @@ paths:
                 type: array
                 items:
                   $ref: "./common.yaml#/components/schemas/Product"
+        "401":
+          $ref: "./common_responses.yaml#/components/responses/Unauthorized"
         "400":
           $ref: "./common_responses.yaml#/components/responses/BadRequest"
       security:
         - basicAuth: []
     post:
       summary: POST /products
+      description: Creates a new product.
+      operationId: post-products
+      tags:
+        - Product
       requestBody:
         required: true
         content:
@@ -128,22 +173,26 @@ paths:
             schema:
               $ref: "./common.yaml#/components/schemas/ProductDetails"
       responses:
-        "200":
+        "201":
           description: POST /products
           content:
             application/json:
               schema:
                 $ref: "./common.yaml#/components/schemas/ProductId"
+        "401":
+          $ref: "./common_responses.yaml#/components/responses/Unauthorized"
         "400":
           $ref: "./common_responses.yaml#/components/responses/BadRequest"
         "403":
           $ref: "./common_responses.yaml#/components/responses/Forbidden"
       security:
-        - oAuth2AuthCode: [admins]
+        - oAuth2AuthCode: ["product:create"]
   /orders:
     get:
       summary: Search for orders
       operationId: get-orders
+      tags:
+        - Order
       responses:
         "200":
           description: OK
@@ -160,6 +209,8 @@ paths:
                       count: 2
                       status: "pending"
                       id: 10
+        "401":
+          $ref: "./common_responses.yaml#/components/responses/Unauthorized"
         "400":
           $ref: "./common_responses.yaml#/components/responses/BadRequest"
       parameters:
@@ -167,6 +218,7 @@ paths:
             type: integer
           in: query
           name: productid
+          description: Filter orders by product identifier.
           examples:
             200_OK:
               value: 10
@@ -174,14 +226,19 @@ paths:
             type: string
           in: query
           name: status
+          description: Filter orders by fulfillment status.
           examples:
             200_OK:
               value: fulfilled
-      description: ""
+      description: Returns orders matching the supplied query filters.
       security:
         - basicAuth: []
     post:
       summary: POST /orders
+      description: Creates a new order.
+      operationId: post-orders
+      tags:
+        - Order
       requestBody:
         required: true
         content:
@@ -189,18 +246,20 @@ paths:
             schema:
               $ref: "./common.yaml#/components/schemas/OrderDetails"
       responses:
-        "200":
+        "201":
           description: POST /orders
           content:
             application/json:
               schema:
                 $ref: "./common.yaml#/components/schemas/OrderId"
+        "401":
+          $ref: "./common_responses.yaml#/components/responses/Unauthorized"
         "400":
           $ref: "./common_responses.yaml#/components/responses/BadRequest"
         "403":
           $ref: "./common_responses.yaml#/components/responses/Forbidden"
       security:
-        - oAuth2AuthCode: [users]
+        - oAuth2AuthCode: ["order:create"]
   "/orders/{id}":
     parameters:
       - schema:
@@ -208,6 +267,7 @@ paths:
         name: id
         in: path
         required: true
+        description: Identifier of the order.
         examples:
           DETAILS:
             value: 10
@@ -215,7 +275,9 @@ paths:
             value: 433
     get:
       summary: Fetch order details
-      tags: []
+      tags:
+        - Order
+      description: Retrieves an order by its identifier.
       responses:
         "200":
           description: OK
@@ -230,6 +292,8 @@ paths:
                     count: 2
                     status: "pending"
                     id: 10
+        "401":
+          $ref: "./common_responses.yaml#/components/responses/Unauthorized"
         "400":
           $ref: "./common_responses.yaml#/components/responses/BadRequest"
         "404":
@@ -237,7 +301,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ErrorResponseBody"
+                $ref: "./common_response_schema.yaml#/components/schemas/BadRequestErrorResponseBody"
               examples:
                 INVALID_ID:
                   value:
@@ -249,9 +313,12 @@ paths:
       parameters: []
       security:
         - basicAuth: []
-    post:
+    patch:
       summary: Update order details
-      operationId: post-orders-id
+      description: Updates an existing order by its identifier.
+      operationId: patch-orders-id
+      tags:
+        - Order
       responses:
         "200":
           description: Success
@@ -259,6 +326,8 @@ paths:
             text/plain:
               schema:
                 type: string
+        "401":
+          $ref: "./common_responses.yaml#/components/responses/Unauthorized"
         "400":
           $ref: "./common_responses.yaml#/components/responses/BadRequest"
         "403":
@@ -270,10 +339,13 @@ paths:
             schema:
               $ref: "./common.yaml#/components/schemas/Order"
       security:
-        - oAuth2AuthCode: [users]
+        - oAuth2AuthCode: ["order:create"]
     delete:
       summary: Cancel an order
+      description: Cancels an existing order by its identifier.
       operationId: delete-orders-id
+      tags:
+        - Order
       responses:
         "200":
           description: Cancel successful
@@ -284,24 +356,14 @@ paths:
               examples:
                 DELETE_ORDER:
                   value: "success"
+        "401":
+          $ref: "./common_responses.yaml#/components/responses/Unauthorized"
         "400":
           $ref: "./common_responses.yaml#/components/responses/BadRequest"
       security:
         - apiKeyAuth: []
 components:
   schemas:
-    ErrorResponseBody:
-      properties:
-        id:
-          type: number
-        timestamp:
-          type: string
-        status:
-          type: number
-        error:
-          type: string
-        message:
-          type: string
   securitySchemes:
     basicAuth:
       type: http
@@ -316,8 +378,8 @@ components:
           tokenUrl: http://localhost:8083/realms/specmatic/protocol/openid-connect/token
           scopes:
             email: email
-            users: users role
-            admins: admins role
+            order:create: Create and update orders
+            product:create: Create and update products
     apiKeyAuth:
       type: apiKey
       in: header
