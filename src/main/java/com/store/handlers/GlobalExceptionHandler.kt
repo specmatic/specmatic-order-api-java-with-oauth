@@ -5,7 +5,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
-import java.time.LocalDateTime
+import java.time.Instant
 
 @ControllerAdvice
 class GlobalExceptionHandler {
@@ -43,17 +43,16 @@ class GlobalExceptionHandler {
         message: String
     ): ErrorResponse {
         return ErrorResponse(
-            LocalDateTime.now(),
-            httpStatus.value(),
-            error,
-            ex.message ?: message
+            error = error,
+            status = httpStatus.value(),
+            message = ex.message ?: message
         )
     }
 }
 
 data class ErrorResponse(
-    val timestamp: LocalDateTime,
     val status: Int,
     val error: String,
-    val message: String
+    val message: String,
+    val timestamp: Instant = Instant.now(),
 )
