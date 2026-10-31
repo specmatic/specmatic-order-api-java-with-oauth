@@ -17,11 +17,16 @@ components:
         - type
         - inventory
     ProductId:
-      $ref: './common-schemas.yaml#/components/schemas/Id'
+      type: object
+      properties:
+        productid:
+          type: integer
+      required:
+        - productid
     Product:
       title: Product
       allOf:
-        - $ref: '#/components/schemas/ProductId'
+        - $ref: './common-schemas.yaml#/components/schemas/Id'
         - $ref: '#/components/schemas/ProductDetails'
     OrderStatus:
       $ref: './common-schemas.yaml#/components/schemas/FulfilledOrderStatus'
@@ -41,11 +46,16 @@ components:
         - count
         - status
     OrderId:
-      $ref: './common-schemas.yaml#/components/schemas/Id'
+      type: object
+      properties:
+        orderid:
+          type: integer
+      required:
+        - orderid
     Order:
       title: Order
       allOf:
-        - $ref: '#/components/schemas/OrderId'
+        - $ref: './common-schemas.yaml#/components/schemas/Id'
         - $ref: '#/components/schemas/OrderDetails'
   parameters:
     OrderStatusParam:

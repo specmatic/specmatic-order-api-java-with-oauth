@@ -17,7 +17,7 @@ class Orders {
     lateinit var orderService: OrderService
 
     @PostMapping("/orders")
-    fun create(@Valid @RequestBody order: Order, @AuthenticationPrincipal user: User): ResponseEntity<Id> {
+    fun create(@Valid @RequestBody order: Order, @AuthenticationPrincipal user: User): ResponseEntity<OrderId> {
         val orderId = orderService.createOrder(order)
         return ResponseEntity(orderId, HttpStatus.CREATED)
     }

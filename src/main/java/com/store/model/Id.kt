@@ -1,3 +1,4 @@
 package com.store.model
 
-data class Id(val id: Int)
+data class ProductId(val productid: Int)
+data class OrderId(val orderid: Int)

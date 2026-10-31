@@ -1,6 +1,7 @@
 package com.store
 
-import com.store.model.Id
+import com.store.model.OrderId
+import com.store.model.ProductId
 import com.store.services.OrderService
 import com.store.services.ProductService
 import org.junit.jupiter.api.Test
@@ -47,11 +48,12 @@ class OAuthScopeSecurityTest {
 
     @Test
     fun `user1 can create and update orders with order create scope`() {
-        whenever(orderService.createOrder(any())).thenReturn(Id(1))
+        whenever(orderService.createOrder(any())).thenReturn(OrderId(1))
 
         postAsScope("/orders", "user1", "order:create", """{"productid":10,"count":2,"status":"pending","id":10}""")
             .andExpect(status().isCreated)
-            .andExpect(jsonPath("$.id").value(1))
+            .andExpect(jsonPath("$.orderid").value(1))
+            .andExpect(jsonPath("$.id").doesNotExist())
 
         patchAsScope("/orders/10", "user1", "order:create", """{"productid":10,"count":1,"status":"pending","id":10}""")
             .andExpect(status().isOk)
@@ -84,11 +86,12 @@ class OAuthScopeSecurityTest {
 
     @Test
     fun `service account can create and update products with product create scope`() {
-        whenever(productService.addProduct(any())).thenReturn(Id(1))
+        whenever(productService.addProduct(any())).thenReturn(ProductId(1))
 
         postAsScope("/products", "service_account", "product:create", """{"name":"Widget","type":"gadget","inventory":10,"id":10}""")
             .andExpect(status().isCreated)
-            .andExpect(jsonPath("$.id").value(1))
+            .andExpect(jsonPath("$.productid").value(1))
+            .andExpect(jsonPath("$.id").doesNotExist())
 
         patchAsScope("/products/10", "service_account", "product:create", """{"name":"Widget","type":"gadget","inventory":10,"id":10}""")
             .andExpect(status().isOk)

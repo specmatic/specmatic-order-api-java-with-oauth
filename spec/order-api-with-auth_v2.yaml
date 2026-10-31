@@ -373,8 +373,7 @@ components:
       type: oauth2
       description: keycloak based oauth security example
       flows:
-        authorizationCode:
-          authorizationUrl: http://localhost:8083/realms/specmatic/protocol/openid-connect/auth
+        password:
           tokenUrl: http://localhost:8083/realms/specmatic/protocol/openid-connect/token
           scopes:
             email: email

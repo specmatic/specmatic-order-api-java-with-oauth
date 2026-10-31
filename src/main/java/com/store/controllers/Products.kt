@@ -2,8 +2,8 @@ package com.store.controllers
 
 import com.store.exceptions.NotFoundException
 import com.store.exceptions.ValidationException
-import com.store.model.Id
 import com.store.model.Product
+import com.store.model.ProductId
 import com.store.model.User
 import com.store.services.ProductService
 import org.springframework.beans.factory.annotation.Autowired
@@ -47,7 +47,7 @@ open class Products {
     }
 
     @PostMapping("/products")
-    fun create(@Valid @RequestBody newProduct: Product, @AuthenticationPrincipal user: User): ResponseEntity<Id> {
+    fun create(@Valid @RequestBody newProduct: Product, @AuthenticationPrincipal user: User): ResponseEntity<ProductId> {
         val productId = productService.addProduct(newProduct.also {
             if(newProduct.type !in typesOfProducts)
                 throw ValidationException("type must be one of ${typesOfProducts.joinToString(", ")}")

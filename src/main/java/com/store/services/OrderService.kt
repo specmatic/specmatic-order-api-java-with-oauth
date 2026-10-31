@@ -2,17 +2,17 @@ package com.store.services
 
 import com.store.exceptions.ValidationException
 import com.store.model.DB
-import com.store.model.Id
 import com.store.model.Order
+import com.store.model.OrderId
 import com.store.model.OrderStatus
 import org.springframework.stereotype.Service
 
 @Service
 class OrderService {
-    fun createOrder(order: Order): Id {
+    fun createOrder(order: Order): OrderId {
         DB.reserveProductInventory(order.productid, order.count)
         DB.addOrder(order)
-        return Id(order.id)
+        return OrderId(order.id)
     }
 
     fun getOrder(id: Int): Order {

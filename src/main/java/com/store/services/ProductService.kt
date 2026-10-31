@@ -2,8 +2,8 @@ package com.store.services
 
 import com.store.exceptions.ValidationException
 import com.store.model.DB
-import com.store.model.Id
 import com.store.model.Product
+import com.store.model.ProductId
 import org.springframework.stereotype.Service
 
 @Service
@@ -19,9 +19,9 @@ class ProductService {
         DB.updateProduct(product)
     }
 
-    fun addProduct(product: Product): Id {
+    fun addProduct(product: Product): ProductId {
         DB.addProduct(product)
-        return Id(product.id)
+        return ProductId(product.id)
     }
 
     fun deleteProduct(id:Int) {

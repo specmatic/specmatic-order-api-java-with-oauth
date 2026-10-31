@@ -1,1 +1,5 @@
+.git
+.gradle
+build
 certs
+scripts/__pycache__
