@@ -1,0 +1,15 @@
+{
+    "PlaceOrder": {
+        "DEFAULT": {
+            "createProduct": {
+                "name": "TWS",
+                "type": "gadget",
+                "inventory": 100
+            },
+            "createOrder": {
+                "count": 10,
+                "status": "pending"
+            }
+        }
+    }
+}

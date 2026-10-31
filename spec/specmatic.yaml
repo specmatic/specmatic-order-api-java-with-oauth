@@ -1,0 +1,75 @@
+version: 3
+systemUnderTest:
+  service:
+    definitions:
+    - definition:
+        source:
+          filesystem:
+            directory: ./spec
+        specs:
+        - spec:
+            id: PlaceOrderWorkflow
+            path: ./arazzo/PlaceOrder.arazzo.yaml
+    runOptions:
+      arazzo:
+        type: test
+        specs:
+        - spec:
+            id: PlaceOrderWorkflow
+            baseUrls:
+              OrderApiOauth: https://order-api:8443
+            vault:
+              profiles:
+                hashicorpLocal:
+                  version: 2
+                  mount: secret
+                  type: hashicorp
+                  tokenKey: VAULT_TOKEN
+                  url: http://vault:8200
+              bindings:
+              - use: hashicorpLocal
+            security:
+              profiles:
+                orderApiMtls:
+                  mtls:
+                    keyStore:
+                      password: changeit
+                      alias: specmatic-client
+                      file: ./certs/specmatic-client.jks
+                    keyStorePassword: changeit
+                serviceAccountOauth:
+                  extends: orderApiMtls
+                  oauth2:
+                    grantType: password
+                    clientAuthentication: none
+                    tokenUrl: http://keycloak:8080/realms/specmatic/protocol/openid-connect/token
+                    clientId:
+                      env: OAUTH_CLIENT_ID
+                    username:
+                      vault:
+                        secretKey: api-security-schemes
+                        field: KEYCLOAK_SERVICE_ACCOUNT_USERNAME
+                    password:
+                      vault:
+                        secretKey: api-security-schemes
+                        field: KEYCLOAK_SERVICE_ACCOUNT_PASSWORD
+                userAccountOauth:
+                  extends: serviceAccountOauth
+                  oauth2:
+                    username:
+                      vault:
+                        secretKey: api-security-schemes
+                        field: KEYCLOAK_USER_USERNAME
+                    password:
+                      vault:
+                        secretKey: api-security-schemes
+                        field: KEYCLOAK_USER_PASSWORD
+              bindings:
+              - when:
+                  workflow: PlaceOrder
+                  step: createProduct
+                use: serviceAccountOauth
+              - when:
+                  workflow: PlaceOrder
+                  step: createOrder
+                use: userAccountOauth

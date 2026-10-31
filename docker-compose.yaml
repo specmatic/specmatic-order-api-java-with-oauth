@@ -1,18 +1,103 @@
-version: '3'
-
-volumes:
-  mysql_data:
-    driver: local
-
 services:
+  vault-init:
+    image: hashicorp/vault:2.0.3
+    user: "0:0"
+    depends_on:
+      vault:
+        condition: service_healthy
+    env_file:
+      - ./vault/vault.env
+      - ./vault/demo-secrets.env
+    environment:
+      VAULT_ADDR: http://vault:8200
+    entrypoint: ["/bin/sh", "/vault/config/bootstrap.sh"]
+    volumes:
+      - ./vault:/vault/config:ro
+
+  vault:
+    image: hashicorp/vault:2.0.3
+    env_file:
+      - ./vault/vault.env
+    environment:
+      VAULT_ADDR: http://127.0.0.1:8200
+      VAULT_DEV_LISTEN_ADDRESS: 0.0.0.0:8200
+    cap_add:
+      - IPC_LOCK
+    healthcheck:
+      test: ["CMD", "vault", "status"]
+      interval: 2s
+      timeout: 2s
+      retries: 15
+    ports:
+      - "8200:8200"
+
   keycloak:
     image: quay.io/keycloak/keycloak:22.0.5
-    volumes:
-      - ./keycloak:/opt/keycloak/data/import
-    command: -v start-dev --import-realm
+    command: start-dev --import-realm
     environment:
-      KEYCLOAK_IMPORT: "/opt/keycloak/data/import/specmatic-realm.json"
+      KEYCLOAK_IMPORT: /opt/keycloak/data/import/specmatic-realm.json
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
+    healthcheck:
+      test:
+        ["CMD", "bash", "-lc", "exec 3<>/dev/tcp/localhost/8080 && printf 'GET /realms/specmatic/.well-known/openid-configuration HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && head -n 1 <&3 | grep -q '200 OK'"]
+      interval: 5s
+      timeout: 3s
+      retries: 18
+      start_period: 10s
+    volumes:
+      - ./keycloak:/opt/keycloak/data/import:ro
     ports:
-      - 8083:8080
+      - "8083:8080"
+
+  order-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/specmatic
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_AUDIENCES: order-api
+      SERVER_SSL_KEY_STORE: file:/certs/server-keystore.jks
+      SERVER_SSL_KEY_STORE_PASSWORD: changeit
+      SERVER_SSL_KEY_PASSWORD: changeit
+      SERVER_SSL_TRUST_STORE: file:/certs/server-truststore.jks
+      SERVER_SSL_TRUST_STORE_PASSWORD: changeit
+      SERVER_SSL_CLIENT_AUTH: need
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -fsS --cacert /certs/ca.crt --cert /certs/specmatic-client.crt --key /certs/specmatic-client.key https://localhost:8443/health >/dev/null",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 18
+      start_period: 10s
+    volumes:
+      - ./certs:/certs:ro
+    ports:
+      - "8443:8443"
+    restart: on-failure
+
+  studio:
+    image: specmatic/enterprise-snapshots:latest
+    command: [studio, --specs-dir, /usr/src/app/spec]
+    ports:
+      - "9000:9000"
+    depends_on:
+      vault-init:
+        condition: service_completed_successfully
+      keycloak:
+        condition: service_healthy
+      order-api:
+        condition: service_healthy
+    environment:
+      OAUTH_CLIENT_ID: order-api
+      VAULT_TOKEN: api-security-order-api-root-token
+    working_dir: /usr/src/app
+    volumes:
+      - .:/usr/src/app

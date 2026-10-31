@@ -12,7 +12,6 @@ services:
       - "8083:8080"
 
   order-api:
-    image: specmaticdemo/specmatic-order-api-java-with-oauth:latest
     build:
       context: .
       dockerfile: Dockerfile
